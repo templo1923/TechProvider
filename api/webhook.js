@@ -1,39 +1,21 @@
-import { kv } from '@vercel/kv';
-
+import { Redis } from '@upstash/redis';
+const redis = Redis.fromEnv(); // Lee automático UPSTASH_REDIS_REST_URL
 const VERIFY_TOKEN = process.env.VERIFY_TOKEN || 'mi_token_global_123';
 
 export default async function handler(req, res) {
-  // Verificación que hace Meta cuando pegas la URL
   if (req.method === 'GET') {
-    const mode = req.query['hub.mode'];
-    const token = req.query['hub.verify_token'];
-    const challenge = req.query['hub.challenge'];
-    if (mode === 'subscribe' && token === VERIFY_TOKEN) {
-      return res.status(200).send(challenge);
+    if (req.query['hub.mode'] === 'subscribe' && req.query['hub.verify_token'] === VERIFY_TOKEN) {
+      return res.status(200).send(req.query['hub.challenge']);
     }
     return res.status(403).send('Forbidden');
   }
-
-  // Llegada de mensajes
   if (req.method === 'POST') {
     const body = req.body;
     const waba_id = body?.entry?.[0]?.id;
-    console.log('Mensaje de WABA:', waba_id);
-
     if (!waba_id) return res.status(200).send('EVENT_RECEIVED');
-
-    // Busca a donde reenviar
-    const urlCliente = await kv.hget('waba_map', waba_id);
-
+    const urlCliente = await redis.hget('waba_map', waba_id);
     if (urlCliente) {
-      await fetch(urlCliente, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      });
-      console.log(`Reenviado ${waba_id} -> ${urlCliente}`);
-    } else {
-      console.log('WABA no mapeado:', waba_id);
+      await fetch(urlCliente, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
     }
     return res.status(200).send('EVENT_RECEIVED');
   }
