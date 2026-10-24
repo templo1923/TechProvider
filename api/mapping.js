@@ -1,14 +1,13 @@
-import { kv } from '@vercel/kv';
-
+import { Redis } from '@upstash/redis';
+const redis = Redis.fromEnv();
 export default async function handler(req, res) {
   if (req.method === 'POST') {
     const { waba_id, url_seller } = req.body;
-    if (!waba_id || !url_seller) return res.status(400).json({error: 'Falta waba_id o url_seller'});
-    await kv.hset('waba_map', { [waba_id]: url_seller });
-    return res.json({ ok: true, waba_id, url_seller });
+    await redis.hset('waba_map', { [waba_id]: url_seller });
+    return res.json({ ok: true });
   }
   if (req.method === 'GET') {
-    const map = await kv.hgetall('waba_map');
+    const map = await redis.hgetall('waba_map');
     return res.json(map || {});
   }
 }
