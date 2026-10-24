@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<【entity-meta¦canonical_name=Meta】 charset="utf-8">
-<【entity-meta¦canonical_name=Meta】 name="viewport" content="width=device-width, initial-scale=1">
-<title>Conectar WhatsApp a Seller Chat</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Conectar 【entity-WhatsApp¦canonical_name=WhatsApp】 a Seller Chat</title>
 <style>
   body{font-family:sans-serif; max-width:600px; margin:40px auto; padding:20px; background:#f7f7f7}
   .card{background:white; padding:24px; border-radius:12px; box-shadow:0 2px 10px rgba(0,0,0,.1)}
@@ -14,62 +14,34 @@
 </head>
 <body>
 <div class="card">
-  <h2>Conectar tu WhatsApp</h2>
-  <p>Tu número está en tu portafolio, le das acceso a nuestra App.</p>
-  
-  <label><b>1. Pega la URL que te da Seller Chat</b></label>
-  <input id="url_seller" placeholder="https://sellerchat.com/webhook/cliente_123">
-
-  <label><b>2. Conecta tu WhatsApp</b></label>
-  <button id="btn" onclick="launchEmbedded()">Conectar con 【entity-Facebook¦canonical_name=Facebook】</button>
-
+  <h2>Conectar tu 【entity-WhatsApp¦canonical_name=WhatsApp】</h2>
+  <input id="url_seller" placeholder="https://panel.sellerchat.ai/api/whatsapp/webhook/xxx">
+  <button onclick="launchEmbedded()">Conectar con 【entity-Facebook¦canonical_name=Facebook】</button>
   <div id="status">Esperando...</div>
 </div>
 
 <script>
   const APP_ID = '811281598468466';
-
   window.fbAsyncInit = function() {
     FB.init({ appId: APP_ID, autoLogAppEvents: true, xfbml: true, version: 'v20.0' });
   };
-
   function launchEmbedded() {
     const url_seller = document.getElementById('url_seller').value.trim();
-    if (!url_seller) { alert('Pega primero la URL de Seller Chat'); return; }
-    
-    document.getElementById('status').innerText = 'Abriendo popup de 【entity-Meta¦canonical_name=Meta】...';
-
+    if (!url_seller) { alert('Pega la URL de Seller'); return; }
+    document.getElementById('status').innerText = 'Abriendo popup...';
     FB.login(function(response) {
+      console.log(response);
       if (response.authResponse) {
         const code = response.authResponse.code;
-        document.getElementById('status').innerText = 'Permiso dado, buscando tu WABA...';
-
         fetch('/api/exchange', {
           method: 'POST',
           headers: {'Content-Type':'application/json'},
           body: JSON.stringify({ code, url_seller })
-        })
-        .then(r=>r.json())
-        .then(data=>{
-          if(data.error) throw new Error(JSON.stringify(data));
-          document.getElementById('status').innerText = 
-            '✅ LISTO!\n\n' +
-            'Mapeo guardado:\n' +
-            'WABA ID: ' + data.waba_id + '\n' +
-            'Phone ID: ' + data.phone_id + '\n' +
-            'Destino: ' + data.url_seller + '\n\n' +
-            'Ahora ve a Seller Chat y pega:\n' +
-            'WABA ID: ' + data.waba_id + '\n' +
-            'Phone ID: ' + data.phone_id + '\n\n' +
-            'Token para Seller Chat (guárdalo):\n' + data.access_token.substring(0,40) + '...\n\n' +
-            'Luego ve a Business Manager > Cuentas de WhatsApp > Conversation routing y cambia a techproviderseller';
-        })
-        .catch(e=>{
-          document.getElementById('status').innerText = 'Error: ' + e;
+        }).then(r=>r.json()).then(data=>{
+          document.getElementById('status').innerText = '✅ LISTO\nWABA: '+data.waba_id+'\nPhone: '+data.phone_id;
         });
-
       } else {
-        document.getElementById('status').innerText = 'Cancelaste el login';
+        document.getElementById('status').innerText = 'Cancelado';
       }
     }, {
       scope: 'business_management,whatsapp_business_management,whatsapp_business_messaging',
@@ -79,6 +51,6 @@
     });
   }
 </script>
-<script async defer crossorigin="anonymous" src="https://connect.【entity-facebook¦canonical_name=Facebook】.net/en_US/sdk.js"></script>
+<script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js"></script>
 </body>
 </html>
