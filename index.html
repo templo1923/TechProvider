@@ -3,43 +3,49 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Conectar WhatsApp</title>
-<style>body{font-family:sans-serif;max-width:600px;margin:40px auto;padding:20px;background:#f7f7f7}.card{background:#fff;padding:24px;border-radius:12px}input{width:100%;padding:12px;margin:10px 0}button{width:100%;padding:14px;background:#1877F2;color:#fff;border:0;border-radius:8px;font-size:16px}</style>
+<title>Conectar</title>
+<style>body{font-family:sans-serif;max-width:600px;margin:30px auto;padding:20px;background:#f5f5f5}.card{background:#fff;padding:20px;border-radius:12px}input{width:100%;padding:12px;margin:10px 0}button{width:100%;padding:14px;background:#1877F2;color:#fff;border:0;border-radius:8px}</style>
 </head>
 <body>
 <div class="card">
-<h2>Conectar tu WhatsApp a Seller Chat</h2>
-<input id="url_seller" placeholder="https://panel.sellerchat.ai/api/whatsapp/webhook/...">
-<button onclick="launch()">Conectar con Facebook</button>
+<input id="url_seller" value="https://panel.sellerchat.ai/api/whatsapp/webhook/1d6dc93a-72ce-4247-9ebf-4f5e0a1fde32">
+<button onclick="launch()">Conectar con 【entity-Facebook¦canonical_name=Facebook】</button>
 <div id="status">Esperando...</div>
 </div>
+
 <script>
 const APP_ID='811281598468466';
 window.fbAsyncInit=function(){FB.init({appId:APP_ID,autoLogAppEvents:true,xfbml:true,version:'v20.0'});};
-window.addEventListener('message', (event)=>{
-  if(event.origin.indexOf('facebook.com')===-1) return;
+
+window.addEventListener('message', function(event){
+  console.log('Evento de FB:', event.origin, event.data);
+  if(event.origin.indexOf('【entity-facebook¦canonical_name=Facebook】')===-1) return;
   try{
-    const data=JSON.parse(event.data);
+    let data=event.data;
+    if(typeof data==='string') data=JSON.parse(data);
     if(data.type==='WA_EMBEDDED_SIGNUP'){
-      const waba_id=data.data?.waba_id;
+      const waba_id=data.data?.waba_id || data.data?.wabaId;
       const phone_id=data.data?.phone_number_id;
       const code=data.data?.code;
       const url_seller=document.getElementById('url_seller').value.trim();
-      document.getElementById('status').innerText='Guardando WABA: '+waba_id;
-      fetch('/api/exchange',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code,waba_id,phone_number_id:phone_id,url_seller})}).then(r=>r.json()).then(d=>{document.getElementById('status').innerText='✅ LISTO\nWABA: '+d.waba_id+'\nPhone: '+d.phone_id;});
+      document.getElementById('status').innerText='Recibido WABA: '+waba_id+' guardando...';
+      fetch('/api/exchange',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code,waba_id,phone_number_id:phone_id,url_seller})}).then(r=>r.json()).then(d=>{
+        document.getElementById('status').innerText='✅ LISTO\nWABA: '+d.waba_id+'\nPhone: '+d.phone_id+'\nDestino: '+d.url_seller;
+      });
     }
-  }catch(e){}
+  }catch(e){console.log(e)}
 });
+
 function launch(){
   const url_seller=document.getElementById('url_seller').value.trim();
-  if(!url_seller){alert('Pega URL Seller');return;}
+  if(!url_seller){alert('Pega URL');return;}
   FB.getLoginStatus(function(res){
     if(res.status==='connected'){FB.logout(function(){doLogin();});}else{doLogin();}
   });
 }
 function doLogin(){
   document.getElementById('status').innerText='Abriendo popup...';
-  FB.login(function(r){console.log(r);},{
+  FB.login(function(r){console.log('FB.login',r);},{
     scope:'business_management,whatsapp_business_management,whatsapp_business_messaging',
     response_type:'code',
     override_default_response_type:true,
