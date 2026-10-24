@@ -3,32 +3,31 @@
 <head>
 <【entity-meta¦canonical_name=Meta】 charset="utf-8">
 <【entity-meta¦canonical_name=Meta】 name="viewport" content="width=device-width, initial-scale=1">
-<title>Conectar 【entity-WhatsApp¦canonical_name=WhatsApp】 a Seller Chat</title>
+<title>Conectar WhatsApp a Seller Chat</title>
 <style>
   body{font-family:sans-serif; max-width:600px; margin:40px auto; padding:20px; background:#f7f7f7}
   .card{background:white; padding:24px; border-radius:12px; box-shadow:0 2px 10px rgba(0,0,0,.1)}
   input{width:100%; padding:12px; margin:10px 0; border:1px solid #ccc; border-radius:8px; box-sizing:border-box}
   button{width:100%; padding:14px; background:#1877F2; color:white; border:0; border-radius:8px; cursor:pointer; font-size:16px; font-weight:bold}
-  button:disabled{background:#ccc}
   #status{margin-top:20px; padding:12px; border-radius:8px; background:#eef; white-space:pre-wrap; word-break:break-all}
 </style>
 </head>
 <body>
 <div class="card">
-  <h2>Conectar tu 【entity-WhatsApp¦canonical_name=WhatsApp】</h2>
-  <p>Flujo completo: tu número está en tu portafolio, pero le das acceso a nuestra App.</p>
+  <h2>Conectar tu WhatsApp</h2>
+  <p>Tu número está en tu portafolio, le das acceso a nuestra App.</p>
   
   <label><b>1. Pega la URL que te da Seller Chat</b></label>
-  <input id="url_seller" placeholder="https://sellerchat.com/webhook/cliente_123_o_tu_panel">
+  <input id="url_seller" placeholder="https://sellerchat.com/webhook/cliente_123">
 
-  <label><b>2. Conecta tu 【entity-WhatsApp¦canonical_name=WhatsApp】 (popup de 【entity-Meta¦canonical_name=Meta】)</b></label>
+  <label><b>2. Conecta tu WhatsApp</b></label>
   <button id="btn" onclick="launchEmbedded()">Conectar con 【entity-Facebook¦canonical_name=Facebook】</button>
 
   <div id="status">Esperando...</div>
 </div>
 
 <script>
-  const APP_ID = '811281598468466'; // Tu App ID de whatkiamber
+  const APP_ID = '811281598468466';
 
   window.fbAsyncInit = function() {
     FB.init({ appId: APP_ID, autoLogAppEvents: true, xfbml: true, version: 'v20.0' });
@@ -37,38 +36,32 @@
   function launchEmbedded() {
     const url_seller = document.getElementById('url_seller').value.trim();
     if (!url_seller) { alert('Pega primero la URL de Seller Chat'); return; }
-    localStorage.setItem('url_seller', url_seller);
+    
     document.getElementById('status').innerText = 'Abriendo popup de 【entity-Meta¦canonical_name=Meta】...';
 
     FB.login(function(response) {
-      console.log('FB.login response', response);
       if (response.authResponse) {
         const code = response.authResponse.code;
-        document.getElementById('status').innerText = 'Permiso dado, guardando mapeo...';
-
-        // Pedimos los IDs que 【entity-Meta¦canonical_name=Meta】 te acaba de crear / seleccionar
-        // En modo sin CONFIG_ID 【entity-Meta¦canonical_name=Meta】 no siempre los devuelve auto, los pedimos manual 1 vez
-        const waba_id = prompt('Pega tu WABA ID (te lo muestra 【entity-Meta¦canonical_name=Meta】 al final del popup, ej: 123456789):');
-        const phone_id = prompt('Pega tu Phone Number ID:');
-
-        if (!waba_id || !phone_id) { alert('Necesitas los IDs'); return; }
+        document.getElementById('status').innerText = 'Permiso dado, buscando tu WABA...';
 
         fetch('/api/exchange', {
           method: 'POST',
           headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({ code, waba_id, phone_number_id: phone_id, url_seller })
+          body: JSON.stringify({ code, url_seller })
         })
         .then(r=>r.json())
         .then(data=>{
+          if(data.error) throw new Error(JSON.stringify(data));
           document.getElementById('status').innerText = 
             '✅ LISTO!\n\n' +
             'Mapeo guardado:\n' +
-            'WABA: ' + waba_id + '\n' +
-            'Phone: ' + phone_id + '\n' +
-            'Destino: ' + url_seller + '\n\n' +
+            'WABA ID: ' + data.waba_id + '\n' +
+            'Phone ID: ' + data.phone_id + '\n' +
+            'Destino: ' + data.url_seller + '\n\n' +
             'Ahora ve a Seller Chat y pega:\n' +
-            'WABA ID: ' + waba_id + '\n' +
-            'Phone ID: ' + phone_id + '\n\n' +
+            'WABA ID: ' + data.waba_id + '\n' +
+            'Phone ID: ' + data.phone_id + '\n\n' +
+            'Token para Seller Chat (guárdalo):\n' + data.access_token.substring(0,40) + '...\n\n' +
             'Luego ve a Business Manager > Cuentas de WhatsApp > Conversation routing y cambia a techproviderseller';
         })
         .catch(e=>{
@@ -82,13 +75,10 @@
       scope: 'business_management,whatsapp_business_management,whatsapp_business_messaging',
       response_type: 'code',
       override_default_response_type: true,
-      extras: {
-        feature: 'whatsapp_business_app_onboarding',
-        setup: {}
-      }
+      extras: { feature: 'whatsapp_business_app_onboarding', setup: {} }
     });
   }
 </script>
-<script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js"></script>
+<script async defer crossorigin="anonymous" src="https://connect.【entity-facebook¦canonical_name=Facebook】.net/en_US/sdk.js"></script>
 </body>
 </html>
