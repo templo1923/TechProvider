@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<【entity-meta¦canonical_name=Meta】 charset="utf-8">
+<【entity-meta¦canonical_name=Meta】 name="viewport" content="width=device-width, initial-scale=1">
 <title>Conectar 【entity-WhatsApp¦canonical_name=WhatsApp】 a Seller Chat</title>
 <style>
   body{font-family:sans-serif; max-width:600px; margin:40px auto; padding:20px; background:#f7f7f7}
@@ -21,8 +21,8 @@
   <label><b>1. Pega la URL que te da Seller Chat</b></label>
   <input id="url_seller" placeholder="https://sellerchat.com/webhook/cliente_123_o_tu_panel">
 
-  <label><b>2. Conecta tu 【entity-WhatsApp¦canonical_name=WhatsApp】 (popup de Meta)</b></label>
-  <button id="btn" onclick="launchEmbedded()">Conectar con Facebook</button>
+  <label><b>2. Conecta tu 【entity-WhatsApp¦canonical_name=WhatsApp】 (popup de 【entity-Meta¦canonical_name=Meta】)</b></label>
+  <button id="btn" onclick="launchEmbedded()">Conectar con 【entity-Facebook¦canonical_name=Facebook】</button>
 
   <div id="status">Esperando...</div>
 </div>
@@ -38,7 +38,7 @@
     const url_seller = document.getElementById('url_seller').value.trim();
     if (!url_seller) { alert('Pega primero la URL de Seller Chat'); return; }
     localStorage.setItem('url_seller', url_seller);
-    document.getElementById('status').innerText = 'Abriendo popup de Meta...';
+    document.getElementById('status').innerText = 'Abriendo popup de 【entity-Meta¦canonical_name=Meta】...';
 
     FB.login(function(response) {
       console.log('FB.login response', response);
@@ -46,7 +46,49 @@
         const code = response.authResponse.code;
         document.getElementById('status').innerText = 'Permiso dado, guardando mapeo...';
 
-        // Pedimos los IDs que Meta te acaba de crear / seleccionar
-        // En modo sin CONFIG_ID Meta no siempre los devuelve auto, los pedimos manual 1 vez
-        const waba_id = prompt('Pega tu WABA ID (te lo muestra Meta al final del popup, ej: 123456789):');
-        const phone
+        // Pedimos los IDs que 【entity-Meta¦canonical_name=Meta】 te acaba de crear / seleccionar
+        // En modo sin CONFIG_ID 【entity-Meta¦canonical_name=Meta】 no siempre los devuelve auto, los pedimos manual 1 vez
+        const waba_id = prompt('Pega tu WABA ID (te lo muestra 【entity-Meta¦canonical_name=Meta】 al final del popup, ej: 123456789):');
+        const phone_id = prompt('Pega tu Phone Number ID:');
+
+        if (!waba_id || !phone_id) { alert('Necesitas los IDs'); return; }
+
+        fetch('/api/exchange', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ code, waba_id, phone_number_id: phone_id, url_seller })
+        })
+        .then(r=>r.json())
+        .then(data=>{
+          document.getElementById('status').innerText = 
+            '✅ LISTO!\n\n' +
+            'Mapeo guardado:\n' +
+            'WABA: ' + waba_id + '\n' +
+            'Phone: ' + phone_id + '\n' +
+            'Destino: ' + url_seller + '\n\n' +
+            'Ahora ve a Seller Chat y pega:\n' +
+            'WABA ID: ' + waba_id + '\n' +
+            'Phone ID: ' + phone_id + '\n\n' +
+            'Luego ve a Business Manager > Cuentas de WhatsApp > Conversation routing y cambia a techproviderseller';
+        })
+        .catch(e=>{
+          document.getElementById('status').innerText = 'Error: ' + e;
+        });
+
+      } else {
+        document.getElementById('status').innerText = 'Cancelaste el login';
+      }
+    }, {
+      scope: 'business_management,whatsapp_business_management,whatsapp_business_messaging',
+      response_type: 'code',
+      override_default_response_type: true,
+      extras: {
+        feature: 'whatsapp_business_app_onboarding',
+        setup: {}
+      }
+    });
+  }
+</script>
+<script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js"></script>
+</body>
+</html>
