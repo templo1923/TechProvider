@@ -6,6 +6,9 @@ const redis = new Redis({
 });
 
 const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
+const WABA_REAL = "1597597978810935";
+const PHONE_ID_REAL = "1386620191199894";
+const PHONE_DISPLAY_REAL = "12057510826";
 
 export default async function handler(req, res) {
   console.log('=== WEBHOOK HIT ===', req.method, JSON.stringify(req.query || {}));
@@ -22,22 +25,41 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'POST') {
-    console.log('POST BODY', JSON.stringify(req.body || {}).slice(0, 3000));
-    let waba_id = req.body?.entry?.[0]?.id?.toString();
-    console.log('WABA ID DETECTADO', waba_id);
+    console.log('POST BODY', JSON.stringify(req.body || {}).slice(0, 4000));
+    let raw_id = req.body?.entry?.[0]?.id?.toString();
+    let waba_id = raw_id;
+    let isTest = false;
 
-    // El Test de Meta manda id 0, lo cambiamos a tu WABA real para probar el forward
-    if (!waba_id || waba_id === "0") {
-      waba_id = "1597597978810935";
-      console.log('TEST DETECTADO, USANDO WABA REAL', waba_id);
+    if (!raw_id || raw_id === "0" || raw_id === "0,0") {
+      isTest = true;
+      waba_id = WABA_REAL;
+      console.log('PRUEBA DETECTADO, USANDO WABA REAL', waba_id);
     }
+
+    console.log('WABA ID DETECTADO', waba_id);
 
     if (!waba_id) {
       return res.status(200).send('EVENT_RECEIVED');
     }
+
+    // Arregla el payload de prueba para que Seller lo acepte
+    try {
+      if (req.body?.entry?.[0]) {
+        req.body.entry[0].id = waba_id;
+        const val = req.body.entry[0].changes?.[0]?.value;
+        if (val?.metadata) {
+          if (isTest || val.metadata.phone_number_id === "123456123") {
+            val.metadata.phone_number_id = PHONE_ID_REAL;
+            val.metadata.display_phone_number = PHONE_DISPLAY_REAL;
+          }
+        }
+      }
+    } catch(e) {
+      console.log('REWRITE ERROR', e.message);
+    }
     
     const urlCliente = await redis.hget('waba_map', waba_id);
-    console.log('MAP RESULT', { waba_id, urlCliente });
+    console.log('MAP RESULT', { waba_id, urlCliente, isTest });
 
     if (urlCliente) {
       console.log('FORWARDING TO', urlCliente);
@@ -48,7 +70,7 @@ export default async function handler(req, res) {
           body: JSON.stringify(req.body)
         });
         const txt = await r.text();
-        console.log('FORWARD STATUS', r.status, txt.slice(0,500));
+        console.log('FORWARD STATUS', r.status, txt.slice(0,800));
       } catch(e){
         console.log('FORWARD ERROR', e.message);
       }
@@ -57,4 +79,6 @@ export default async function handler(req, res) {
     }
     return res.status(200).send('EVENT_RECEIVED');
   }
+
+  return res.status(405).send('Method Not Allowed');
 }
