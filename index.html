@@ -4,31 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Conectar WhatsApp</title>
-<style>
-body{font-family:sans-serif;max-width:600px;margin:40px auto;padding:20px;background:#f7f7f7}
-.card{background:#fff;padding:24px;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.1)}
-input{width:100%;padding:12px;margin:10px 0;border:1px solid #ccc;border-radius:8px;box-sizing:border-box}
-button{width:100%;padding:14px;background:#1877F2;color:#fff;border:0;border-radius:8px;font-size:16px;font-weight:bold;cursor:pointer}
-#status{margin-top:20px;padding:12px;background:#eef;border-radius:8px;white-space:pre-wrap;word-break:break-all}
-</style>
+<style>body{font-family:sans-serif;max-width:600px;margin:40px auto;padding:20px;background:#f7f7f7}.card{background:#fff;padding:24px;border-radius:12px}input{width:100%;padding:12px;margin:10px 0}button{width:100%;padding:14px;background:#1877F2;color:#fff;border:0;border-radius:8px;font-size:16px}</style>
 </head>
 <body>
 <div class="card">
 <h2>Conectar tu WhatsApp a Seller Chat</h2>
 <input id="url_seller" placeholder="https://panel.sellerchat.ai/api/whatsapp/webhook/...">
-<button onclick="launch()">Conectar con 【entity-Facebook¦canonical_name=Facebook】</button>
+<button onclick="launch()">Conectar con Facebook</button>
 <div id="status">Esperando...</div>
 </div>
-
 <script>
 const APP_ID='811281598468466';
-
-window.fbAsyncInit=function(){
-  FB.init({appId:APP_ID,autoLogAppEvents:true,xfbml:true,version:'v20.0'});
-};
-
+window.fbAsyncInit=function(){FB.init({appId:APP_ID,autoLogAppEvents:true,xfbml:true,version:'v20.0'});};
 window.addEventListener('message', (event)=>{
-  if(event.origin.indexOf('【entity-facebook¦canonical_name=Facebook】.com')===-1) return;
+  if(event.origin.indexOf('facebook.com')===-1) return;
   try{
     const data=JSON.parse(event.data);
     if(data.type==='WA_EMBEDDED_SIGNUP'){
@@ -37,32 +26,20 @@ window.addEventListener('message', (event)=>{
       const code=data.data?.code;
       const url_seller=document.getElementById('url_seller').value.trim();
       document.getElementById('status').innerText='Guardando WABA: '+waba_id;
-      fetch('/api/exchange',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({code,waba_id,phone_number_id:phone_id,url_seller})
-      }).then(r=>r.json()).then(d=>{
-        document.getElementById('status').innerText='✅ LISTO\nWABA: '+d.waba_id+'\nPhone: '+d.phone_id+'\nDestino: '+d.url_seller;
-      });
+      fetch('/api/exchange',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code,waba_id,phone_number_id:phone_id,url_seller})}).then(r=>r.json()).then(d=>{document.getElementById('status').innerText='✅ LISTO\nWABA: '+d.waba_id+'\nPhone: '+d.phone_id;});
     }
   }catch(e){}
 });
-
 function launch(){
   const url_seller=document.getElementById('url_seller').value.trim();
-  if(!url_seller){alert('Pega primero la URL de Seller');return;}
+  if(!url_seller){alert('Pega URL Seller');return;}
   FB.getLoginStatus(function(res){
-    if(res.status==='connected'){
-      FB.logout(function(){ doLogin(); });
-    }else{
-      doLogin();
-    }
+    if(res.status==='connected'){FB.logout(function(){doLogin();});}else{doLogin();}
   });
 }
-
 function doLogin(){
   document.getElementById('status').innerText='Abriendo popup...';
-  FB.login(function(r){ console.log(r); }, {
+  FB.login(function(r){console.log(r);},{
     scope:'business_management,whatsapp_business_management,whatsapp_business_messaging',
     response_type:'code',
     override_default_response_type:true,
@@ -70,6 +47,6 @@ function doLogin(){
   });
 }
 </script>
-<script async defer crossorigin="anonymous" src="https://connect.【entity-facebook¦canonical_name=Facebook】.net/en_US/sdk.js"></script>
+<script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js"></script>
 </body>
 </html>
