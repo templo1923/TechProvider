@@ -23,11 +23,16 @@ export default async function handler(req, res) {
 
   if (req.method === 'POST') {
     console.log('POST BODY', JSON.stringify(req.body || {}).slice(0, 3000));
-    const waba_id = req.body?.entry?.[0]?.id;
+    let waba_id = req.body?.entry?.[0]?.id?.toString();
     console.log('WABA ID DETECTADO', waba_id);
 
+    // El Test de Meta manda id 0, lo cambiamos a tu WABA real para probar el forward
+    if (!waba_id || waba_id === "0") {
+      waba_id = "1597597978810935";
+      console.log('TEST DETECTADO, USANDO WABA REAL', waba_id);
+    }
+
     if (!waba_id) {
-      console.log('No waba_id, return OK');
       return res.status(200).send('EVENT_RECEIVED');
     }
     
@@ -42,7 +47,8 @@ export default async function handler(req, res) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(req.body)
         });
-        console.log('FORWARD STATUS', r.status);
+        const txt = await r.text();
+        console.log('FORWARD STATUS', r.status, txt.slice(0,500));
       } catch(e){
         console.log('FORWARD ERROR', e.message);
       }
