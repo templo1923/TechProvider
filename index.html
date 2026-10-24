@@ -1,60 +1,33 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <【entity-meta¦canonical_name=Meta】 charset="utf-8">
-  <title>Conectar WhatsApp a Seller Chat</title>
-  <script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js"></script>
-</head>
-<body style="font-family:sans-serif; max-width:600px; margin:40px auto;">
-  <h2>Conectar tu WhatsApp a Seller Chat</h2>
-  
-  <label>1. Pega la URL que te da Seller Chat:</label><br>
-  <input id="url_seller" style="width:100%; padding:10px; margin:10px 0;" placeholder="https://sellerchat.com/webhook/cliente_123"><br><br>
-
-  <label>2. Conecta tu WhatsApp:</label><br>
-  <button onclick="launchEmbedded()" style="padding:12px 20px; background:#1877F2; color:white; border:0; border-radius:6px; cursor:pointer; font-size:16px;">
-    Conectar con 【entity-Facebook¦canonical_name=Facebook】
-  </button>
-
-  <div id="status" style="margin-top:20px;"></div>
+<button onclick="launchEmbedded()" style="padding:12px 20px; background:#1877F2; color:white; border:0; border-radius:6px;">
+  Conectar WhatsApp
+</button>
 
 <script>
-  const APP_ID = 'TU_APP_ID'; // pon tu App ID de techproviderseller
-  const CONFIG_ID = 'TU_CONFIG_ID'; // lo sacas de developers > WhatsApp > Embedded Signup > Configuración
-
   window.fbAsyncInit = function() {
-    FB.init({ appId: APP_ID, autoLogAppEvents: true, xfbml: true, version: 'v20.0' });
+    FB.init({ appId: '811281598468466', autoLogAppEvents: true, xfbml: true, version: 'v20.0' });
   };
 
   function launchEmbedded() {
     const url_seller = document.getElementById('url_seller').value;
-    if (!url_seller) { alert('Pega primero la URL de Seller Chat'); return; }
     localStorage.setItem('url_seller', url_seller);
-
-    FB.login(function(response) {
-      if (response.authResponse) {
+    
+    FB.login(function(response){
+      console.log(response);
+      if(response.authResponse){
         const code = response.authResponse.code;
-        // 【entity-Meta¦canonical_name=Meta】 también manda waba_id y phone_number_id en el callback del SDK
-        FB.api('/me/permissions', function(){});
-        // El SDK te devuelve en response los datos
-        const waba_id = response.authResponse.waba_id || prompt('Pega tu WABA ID:');
-        const phone_id = response.authResponse.phone_number_id || prompt('Pega tu Phone ID:');
-        
+        // Aquí ya tienes el code para cambiar por token
         fetch('/api/exchange', {
           method: 'POST',
           headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({ code, waba_id, phone_number_id: phone_id, url_seller })
-        }).then(r=>r.json()).then(data=>{
-          document.getElementById('status').innerHTML = '✅ Listo! Ya puedes pegar en Seller Chat:<br>WABA: '+waba_id+'<br>Phone: '+phone_id+'<br><br>'+JSON.stringify(data);
-        });
+          body: JSON.stringify({ code, url_seller, waba_id: prompt('Pega WABA ID que te dio Meta:'), phone_number_id: prompt('Phone ID:') })
+        }).then(r=>r.json()).then(d=>alert('Mapeado: '+JSON.stringify(d)));
       }
     }, {
-      config_id: CONFIG_ID,
+      scope: 'business_management,whatsapp_business_management,whatsapp_business_messaging',
       response_type: 'code',
       override_default_response_type: true,
-      extras: { setup: {}, featureType: 'whatsapp_business_app_onboarding', sessionInfoVersion: '3' }
+      extras: { feature: 'whatsapp_business_app_onboarding', setup: {} }
     });
   }
 </script>
-</body>
-</html>
+<script async defer src="https://connect.facebook.net/en_US/sdk.js"></script>
