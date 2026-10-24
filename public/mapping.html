@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<body>
+<h2>Mapear WABA a Seller</h2>
+<input id="waba" placeholder="WABA ID ej: 2603351616837551" style="width:400px"><br><br>
+<input id="url" placeholder="URL Seller ej: https://panel.sellerchat.ai/api/whatsapp/webhook/cliente_123" style="width:400px"><br><br>
+<button onclick="save()">Guardar</button>
+<pre id="log"></pre>
+<script>
+async function save(){
+  const waba_id = document.getElementById('waba').value;
+  const url_seller = document.getElementById('url').value;
+  const r = await fetch('/api/mapping', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({waba_id, url_seller})});
+  const d = await r.json();
+  document.getElementById('log').textContent = JSON.stringify(d, null, 2);
+}
+</script>
+</body>
+</html>
