@@ -1,7 +1,6 @@
 {
-  "name": "seller-router",
   "type": "module",
   "dependencies": {
-    "@upstash/redis":"^1.31.0"
+    "@upstash/redis": "^1.31.0"
   }
 }
