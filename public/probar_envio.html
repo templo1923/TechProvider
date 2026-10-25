@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html><body>
+<h2>Probar envío directo a 【entity-Meta¦canonical_name=Meta】</h2>
+<input id="token" placeholder="Pega tu token EAAN..." style="width:600px"><br><br>
+<input id="phone" value="1386620191199894" style="width:600px"><br><br>
+<input id="to" placeholder="Tu WhatsApp ej: 573001234567" style="width:600px"><br><br>
+<input id="msg" value="Hola prueba" style="width:600px"><br><br>
+<button onclick="enviar()">Enviar WhatsApp</button>
+<pre id="log" style="background:#eee;padding:10px"></pre>
+<script>
+async function enviar(){
+  const token = document.getElementById('token').value;
+  const phone = document.getElementById('phone').value;
+  const to = document.getElementById('to').value;
+  const msg = document.getElementById('msg').value;
+  const r = await fetch(`https://graph.facebook.com/v20.0/${phone}/messages`, {
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+    body: JSON.stringify({messaging_product:'whatsapp', to: to, type:'text', text:{body:msg}})
+  });
+  const d = await r.json();
+  document.getElementById('log').textContent = JSON.stringify(d, null, 2);
+}
+</script>
+</body></html>
