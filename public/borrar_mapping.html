@@ -4,11 +4,7 @@
 </head><body>
 <h2>Borrar WABA Mapping</h2>
 <div id="list">Cargando...</div>
-<<<<<<< HEAD
 <h3>Últimos logs (mensajes y estados)</h3>
-=======
-<h3>Últimos logs</h3>
->>>>>>> bd2b935808f5186c002828723c345e6c8288de2b
 <div id="logs"></div>
 <script>
 async function load(){
@@ -35,11 +31,7 @@ async function load(){
     div.appendChild(el);
   });
   const logsDiv = document.getElementById('logs');
-<<<<<<< HEAD
   logsDiv.innerHTML = '<pre style="background:#f5f5f5;padding:10px;overflow:auto;max-height:400px">'+JSON.stringify(data.last_logs||[], null, 2).slice(0,8000)+'</pre>';
-=======
-  logsDiv.innerHTML = '<pre>'+JSON.stringify(data.last_logs||[], null, 2).slice(0,3000)+'</pre>';
->>>>>>> bd2b935808f5186c002828723c345e6c8288de2b
 }
 load();
 </script>
