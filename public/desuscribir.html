@@ -1,0 +1,11 @@
+<input id="token" placeholder="Token de sellerchat 926502953650809" style="width:600px"><br><br>
+<button onclick="del()">Desuscribir sellerchat de WABA 1597597978810935</button>
+<pre id="log"></pre>
+<script>
+async function del(){
+  const token = document.getElementById('token').value;
+  const r = await fetch(`https://graph.facebook.com/v20.0/1597597978810935/subscribed_apps?access_token=${token}`, {method:'DELETE'});
+  const d = await r.json();
+  document.getElementById('log').textContent = JSON.stringify(d,null,2);
+}
+</script>

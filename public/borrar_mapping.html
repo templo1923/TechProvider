@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Borrar Mapeos</title>
+<style>body{font-family:system-ui;padding:20px;max-width:700px;margin:auto}button{padding:8px 12px;margin:5px;cursor:pointer}.item{border:1px solid #ccc;padding:10px;margin:10px 0;display:flex;justify-content:space-between;align-items:center}code{font-size:11px;word-break:break-all}</style>
+</head><body>
+<h2>Borrar WABA Mapping</h2>
+<div id="list">Cargando...</div>
+<h3>Últimos logs (mensajes y estados)</h3>
+<div id="logs"></div>
+<script>
+async function load(){
+  const r = await fetch('/api/mapping');
+  const data = await r.json();
+  const map = data.mapping || data;
+  const div = document.getElementById('list');
+  div.innerHTML = '';
+  Object.entries(map).forEach(([k,v])=>{
+    if(typeof v !== 'string') return;
+    const el = document.createElement('div');
+    el.className='item';
+    el.innerHTML = `<div><b>${k}</b><br><code>${v}</code></div>`;
+    const btn = document.createElement('button');
+    btn.textContent = 'Borrar';
+    btn.onclick = async ()=>{
+      if(!confirm('Borrar '+k+'?')) return;
+      const del = await fetch('/api/mapping', {method:'DELETE', headers:{'Content-Type':'application/json'}, body: JSON.stringify({waba_id:k})});
+      const res = await del.json();
+      alert(JSON.stringify(res));
+      load();
+    };
+    el.appendChild(btn);
+    div.appendChild(el);
+  });
+  const logsDiv = document.getElementById('logs');
+  logsDiv.innerHTML = '<pre style="background:#f5f5f5;padding:10px;overflow:auto;max-height:400px">'+JSON.stringify(data.last_logs||[], null, 2).slice(0,8000)+'</pre>';
+}
+load();
+</script>
+</body></html>
