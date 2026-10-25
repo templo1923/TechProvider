@@ -26,6 +26,14 @@ export default async function handler(req, res) {
 
   if (req.method === 'POST') {
     console.log('POST BODY', JSON.stringify(req.body || {}).slice(0, 4000));
+    
+    try {
+      await redis.lpush('webhook_logs', JSON.stringify(req.body));
+      await redis.ltrim('webhook_logs', 0, 19);
+    } catch(e) {
+      console.log('LOG SAVE ERROR', e.message);
+    }
+
     let raw_id = req.body?.entry?.[0]?.id?.toString();
     let waba_id = raw_id;
     let isTest = false;
@@ -42,7 +50,6 @@ export default async function handler(req, res) {
       return res.status(200).send('EVENT_RECEIVED');
     }
 
-    // Arregla el payload de prueba para que Seller lo acepte
     try {
       if (req.body?.entry?.[0]) {
         req.body.entry[0].id = waba_id;
