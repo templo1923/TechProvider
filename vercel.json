@@ -1,5 +1,1 @@
-{
-  "framework": null,
-  "buildCommand": "",
-  "outputDirectory": "public"
-}
+{"rewrites":[{"source":"/dashboard","destination":"/public/dashboard.html"},{"source":"/connections","destination":"/public/connections.html"}]}

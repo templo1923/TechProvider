@@ -1,0 +1,1 @@
+export default async function handler(req,res){ return res.status(200).json({app_id:process.env.APP_ID, mode:'ranvedix-clone'}); }
