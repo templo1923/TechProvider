@@ -1,26 +1,56 @@
-import { getRedis, encryptToken } from '../lib/redis.js';
+/**
+ * Clean exchange - no burned data
+ * Env: APP_ID, APP_SECRET, WHATSAPP_CONFIG_ID, VERIFY_TOKEN, ENCRYPTION_KEY
+ */
+import { kvSet, kvSadd } from '../lib/redis.js';
+import { encrypt } from '../lib/encrypt.js';
+const GRAPH='https://graph.facebook.com/v20.0';
+function getAppId(){ return (process.env.APP_ID || '811281598468466').trim(); }
+function getConfigId(){ return (process.env.WHATSAPP_CONFIG_ID || process.env.CONFIG_ID || '1889600718898450').trim(); }
 export default async function handler(req,res){
-  const { code, destination_url, verify_token } = req.body;
-  const APP_ID = process.env.APP_ID, APP_SECRET = process.env.APP_SECRET;
-  if(!code) return res.status(400).json({error:'falta code'});
-  const tokenRes = await fetch(`https://graph.facebook.com/v23.0/oauth/access_token?client_id=${APP_ID}&client_secret=${APP_SECRET}&code=${code}&redirect_uri=https://techproviderseller.vercel.app/`);
-  const tokenData = await tokenRes.json();
-  const user_token = tokenData.access_token;
-  const bizRes = await fetch(`https://graph.facebook.com/v23.0/me/businesses?access_token=${user_token}`); const bizData = await bizRes.json(); const business_id = bizData.data?.[0]?.id;
-  const wabaRes = await fetch(`https://graph.facebook.com/v23.0/me/whatsapp_business_accounts?access_token=${user_token}`); const wabaData = await wabaRes.json(); const waba_id = wabaData.data?.[0]?.id;
-  const phoneRes = await fetch(`https://graph.facebook.com/v23.0/${waba_id}/phone_numbers?access_token=${user_token}`); const phoneData = await phoneRes.json(); const phone_id = phoneData.data?.[0]?.id; const phone_number = phoneData.data?.[0]?.display_phone_number;
-  let system_user_id=null, perm_token=null;
+  if(req.method!=='POST') return res.status(405).json({error:'Method not allowed'});
   try{
-    const sysRes = await fetch(`https://graph.facebook.com/v23.0/${business_id}/system_users`, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({name:'TechProvider Admin', role:'ADMIN', access_token:user_token})});
-    const sysData = await sysRes.json(); system_user_id = sysData.id;
-    await fetch(`https://graph.facebook.com/v23.0/${waba_id}/assigned_users`, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({user: system_user_id, tasks:['MANAGE','DEVELOP'], access_token:user_token})});
-    const permRes = await fetch(`https://graph.facebook.com/v23.0/${system_user_id}/access_tokens?business_app=${APP_ID}&scope=whatsapp_business_management,business_management,whatsapp_business_messaging&access_token=${user_token}`, {method:'POST'}); const permData = await permRes.json(); perm_token = permData.access_token;
-  }catch(e){ console.log(e); }
-  const redis = getRedis(); const connectionId = phone_id || waba_id;
-  if(connectionId){
-    await redis.hset(`connections:${connectionId}`, {waba_id:waba_id||'', phone_number_id:phone_id||'', phone_number:phone_number||'', destination_url:(destination_url||'').trim(), verify_token:(verify_token||'').trim(), token_encrypted: perm_token?encryptToken(perm_token):'', business_id:business_id||'', system_user_id:system_user_id||'', status:'live', type:'Coexistencia', created_at:new Date().toISOString()});
-    if(destination_url){ const dest=destination_url.trim(); if(waba_id) await redis.hset('waba_map', {[waba_id.trim()]:dest}); if(phone_id) await redis.hset('waba_map', {[phone_id.trim()]:dest}); }
-    if(destination_url && verify_token && waba_id && perm_token){ await fetch(`https://graph.facebook.com/v23.0/${waba_id}/subscribed_apps`, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({override_callback_uri:destination_url.trim(), verify_token:verify_token.trim(), subscribed_fields:['messages','message_template_status_update'], access_token:perm_token})}); }
-  }
-  return res.status(200).json({ok:true, waba_id, phone_id, phone_number, has_perm_token:!!perm_token, access_token_once:perm_token});
+    const {code, destination_url, verify_token, coexistence, business_id: inputBusinessId} = req.body||{};
+    if(!code) return res.status(400).json({error:'Missing code'});
+    if(!destination_url) return res.status(400).json({error:'Missing destination_url - use placeholder https://your-app.com/webhook/whatsapp'});
+    if(!destination_url.trim().startsWith('https://')) return res.status(400).json({error:'destination_url must be HTTPS'});
+    const APP_ID=getAppId(); const CONFIG_ID=getConfigId();
+    const APP_SECRET=process.env.APP_SECRET; if(!APP_SECRET) return res.status(500).json({error:'Missing APP_SECRET env'});
+    const VERIFY_TOKEN=(verify_token || process.env.VERIFY_TOKEN || '').trim();
+    if(!VERIFY_TOKEN) return res.status(400).json({error:'Missing verify_token - placeholder: your-webhook-verify-token'});
+
+    const tokenUrl=`${GRAPH}/oauth/access_token?client_id=${APP_ID}&client_secret=${APP_SECRET}&code=${encodeURIComponent(code.trim())}`;
+    const tokenRes=await fetch(tokenUrl); const tokenData=await tokenRes.json();
+    if(!tokenRes.ok || !tokenData.access_token){ console.error('token fail',tokenData); return res.status(400).json({error:'Token exchange failed', details:tokenData, hint:'Check App Domains and Valid OAuth Redirect URIs contain techproviderseller.vercel.app and app is Live'}); }
+    const userToken=tokenData.access_token;
+
+    let businesses=[]; const bizRes=await fetch(`${GRAPH}/me/businesses?access_token=${encodeURIComponent(userToken)}`); const bizData=await bizRes.json(); if(bizData.data) businesses=bizData.data;
+    let wabas=[];
+    for(const biz of businesses){
+      const ownedRes=await fetch(`${GRAPH}/${biz.id}/owned_whatsapp_business_accounts?access_token=${encodeURIComponent(userToken)}`); const ownedData=await ownedRes.json().catch(()=>({})); if(ownedData.data) for(const w of ownedData.data) wabas.push({...w, business_id:biz.id});
+      const clientRes=await fetch(`${GRAPH}/${biz.id}/client_whatsapp_business_accounts?access_token=${encodeURIComponent(userToken)}`); const clientData=await clientRes.json().catch(()=>({})); if(clientData.data) for(const w of clientData.data) wabas.push({...w, business_id:biz.id});
+    }
+    if(inputBusinessId){ const f=wabas.filter(w=>w.business_id===inputBusinessId); if(f.length>0) wabas=f; }
+    let mappings=[]; let phone_numbers=[];
+    for(const waba of wabas){
+      const wabaId=(waba.id||'').trim(); if(!wabaId) continue;
+      const phRes=await fetch(`${GRAPH}/${wabaId}/phone_numbers?access_token=${encodeURIComponent(userToken)}`); const phData=await phRes.json().catch(()=>({})); const numbers=phData.data||[];
+      for(const ph of numbers){
+        const phoneId=(ph.id||'').trim(); if(!phoneId) continue; phone_numbers.push(ph);
+        let subResult=null;
+        try{
+          const subRes=await fetch(`${GRAPH}/${wabaId}/subscribed_apps`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({override_callback_uri:destination_url.trim(), verify_token:VERIFY_TOKEN, access_token:userToken})});
+          subResult=await subRes.json().catch(()=>({}));
+          if(!subRes.ok){
+            const subRes2=await fetch(`${GRAPH}/${wabaId}/subscribed_apps?override_callback_uri=${encodeURIComponent(destination_url.trim())}&verify_token=${encodeURIComponent(VERIFY_TOKEN)}&access_token=${encodeURIComponent(userToken)}`,{method:'POST'});
+            subResult=await subRes2.json().catch(()=>subResult);
+          }
+        }catch(e){ subResult={error:e.message}; }
+        const record={waba_id:wabaId, phone_number_id:phoneId, phone_number:ph.display_phone_number||'', display_phone_number:ph.display_phone_number||'', business_id:waba.business_id, name:ph.verified_name||'', destination_url:destination_url.trim(), verify_token:VERIFY_TOKEN, coexistence:!!coexistence, config_id:CONFIG_ID, app_id:APP_ID, access_token_encrypted:encrypt(userToken), subscribed_apps_result:subResult, created_at:new Date().toISOString(), flow:'tech_provider_clean', override_callback_uri:destination_url.trim()};
+        await kvSet(`waba_map:${phoneId}`, record).catch(()=>{}); await kvSadd('connections:index', phoneId).catch(()=>{});
+        mappings.push({phone_number_id:phoneId, waba_id:wabaId, display_phone_number:ph.display_phone_number, subscribed_apps:subResult, destination_url:destination_url.trim()});
+      }
+    }
+    return res.status(200).json({success:true, app_id:APP_ID, config_id:CONFIG_ID, businesses_found:businesses.length, wabas_found:wabas.length, phone_numbers_found:phone_numbers.length, mappings, message:`Tech Provider flow completed WITHOUT business verification using config_id ${CONFIG_ID}`});
+  }catch(err){ console.error('exchange error',err); return res.status(500).json({error:'Internal error', details:err.message}); }
 }
