@@ -1,0 +1,23 @@
+{
+  "version": 2,
+  "builds": [
+    { "src": "api/*.js", "use": "@vercel/node" },
+    { "src": "public/**", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/api/webhook", "dest": "/api/webhook.js" },
+    { "src": "/api/exchange", "dest": "/api/exchange.js" },
+    { "src": "/api/mapping", "dest": "/api/mapping.js" },
+    { "src": "/api/connections", "dest": "/api/connections.js" },
+    { "src": "/api/logs", "dest": "/api/logs.js" },
+    { "src": "/(.*)", "dest": "/public/$1" },
+    { "src": "/", "dest": "/public/index.html" }
+  ],
+  "env": {
+    "VERIFY_TOKEN": "@verify_token",
+    "APP_SECRET": "@app_secret",
+    "UPSTASH_REDIS_REST_URL": "@upstash_redis_rest_url",
+    "UPSTASH_REDIS_REST_TOKEN": "@upstash_redis_rest_token",
+    "ENCRYPTION_KEY": "@encryption_key"
+  }
+}
