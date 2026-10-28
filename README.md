@@ -1,16 +1,30 @@
-# TechProvider CLEAN SAAS FINAL - Single landing, no burned data
+# Tech Provider Final - SIN CONFIG_ID - SIN VERIFICACION
+Clean SaaS template that works WITHOUT portfolio verification and WITHOUT Kiamber Corp error.
 
-Fixed 3 problems:
-- Removed all hardcoded webhook URLs and verify tokens, phone IDs, WABA IDs from landing and backend - now env vars + placeholders only
-- Fixed FB SDK asyncfunction error: fbAsyncInit as regular function, loader via (function(d,s,id){...}), FB.init with autoLogAppEvents,xfbml,version v20.0
-- Restored Ranvedix professional non-technical conversion-focused landing LATAM Spanish
-- Modal placeholders: Destination https://your-app.com/webhook/whatsapp (empty value) and verify token placeholder your-webhook-verify-token
+## Why this fixes Kiamber Corp error
+Earlier builds used `config_id: 18896..._REMOVED_FOR_CLEAN_BUILD (old system_user flow)` with `system_user` type.
+That requires Tech Provider business verification. If not verified, Meta returns: "Kiamber Corp no puede incorporar clientes".
 
-APP_ID 811281598468466 + CONFIG 1889600718898450 work without portfolio verification in dev mode
+Final fix: Use OLD self-serve flow without config_id:
+```js
+FB.login(callback, {
+  scope: 'whatsapp_business_management,whatsapp_business_messaging,business_management',
+  extras: { featureType: 'whatsapp_business_app_onboarding', sessionInfoVersion: 3 }
+})
+```
+Self-serve, no system_user, works in dev mode.
 
-Checklist:
-- Landing hero: Tus mensajes van a todas partes excepto a traves de nosotros.
-- Trust bar: Meta Tech Provider, Official Cloud API, Message-blind, Per-tenant
-- How it works 3 pasos, pricing 9/49/149, FAQ, footer
-- No technical IDs in landing text
-- FB SDK: domain check for techproviderseller.vercel.app, warning banner, friendly error about App Domains and OAuth URIs
+Funciona sin verificar portafolio en modo desarrollo - flujo self-serve
+
+## Files
+/api/webhook.js (message-blind)
+/api/exchange.js (OLD FLOW exchange code -> token via /oauth/access_token?client_id=APP_ID&client_secret=APP_SECRET&code=CODE, me/businesses, owned_whatsapp_business_accounts, phone_numbers, POST subscribed_apps override_callback_uri = destination_url)
+/api/mapping.js, connections.js, logs.js
+/lib/redis.js, encrypt.js
+/public/index.html beautiful Ranvedix landing CLEAN no burned data
+vercel.json, .env.example
+
+## FB SDK fixed
+window.fbAsyncInit = function() NOT async
+(function(d,s,id)... loader
+FB.init({appId: '811281598468466', autoLogAppEvents: true, xfbml: true, version: 'v20.0'})
