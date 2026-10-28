@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Ranvedix — Tech Provider Router sin verificacion</title>
+<meta name="description" content="Tus mensajes van a todas partes excepto a traves de nosotros. Message-blind WhatsApp Cloud API router, self-serve OLD flow sin config_id."/>
+<link rel="preconnect" href="https://connect.facebook.net"/>
+<style>
+:root{
+  --bg:#fcfaf8;
+  --fg:#0f0f0f;
+  --muted:#6b7280;
+  --line:#ece6e0;
+  --card:#ffffff;
+  --dark:#0f0f0f;
+  --dark2:#151515;
+  --accent:#111;
+  --pill:#f3efe9;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--fg);font-family:Inter,ui-sans-system, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing:antialiased;}
+a{color:inherit;text-decoration:none}
+button{font:inherit}
+.badge{display:inline-flex;align-items:center;gap:.5rem;border:1px solid var(--line);background:var(--card);padding:.35rem .7rem;border-radius:999px;font-size:.78rem;letter-spacing:.02em}
+.nav{position:sticky;top:0;z-index:30;background:rgba(252,250,248,.85);backdrop-filter:saturate(1.2) blur(12px);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:.9rem 1.2rem}
+.nav .links{display:flex;gap:1.5rem;align-items:center;color:var(--muted);font-size:.95rem}
+.nav .logo{font-weight:800;letter-spacing:-.02em;font-size:1.15rem;display:flex;align-items:center;gap:.5rem}
+.nav .logo-dot{width:9px;height:9px;background:#000;border-radius:50%;display:inline-block}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;border-radius:999px;padding:.75rem 1.15rem;border:1px solid var(--fg);background:var(--fg);color:#fff;font-weight:600;cursor:pointer;transition:.15s transform, .15s opacity}
+.btn:hover{transform:translateY(-1px)}
+.btn.outline{background:transparent;color:var(--fg)}
+.btn.ghost{background:var(--card);color:var(--fg);border-color:var(--line)}
+.btn.small{padding:.55rem .9rem;font-size:.9rem}
+.container{max-width:1180px;margin:0 auto;padding:0 1.2rem}
+.hero{display:grid;grid-template-columns:1.1fr .9fr;gap:2.2rem;align-items:center;padding:3.2rem 0 2rem}
+@media(max-width:960px){.hero{grid-template-columns:1fr;padding-top:1.8rem}.nav .links .hide-m{display:none}}
+.h1{font-size:clamp(2.1rem,5vw,3.8rem);line-height:.98;letter-spacing:-.04em;font-weight:900;margin:0}
+.lead{color:var(--muted);font-size:1.08rem;line-height:1.6;margin:1rem 0 0;max-width:52ch}
+.hero-actions{display:flex;gap:.8rem;flex-wrap:wrap;margin-top:1.5rem}
+.trust{display:flex;flex-wrap:wrap;gap:.6rem;margin-top:1.6rem}
+.trust .badge{background:var(--pill)}
+.card-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin:1.2rem 0}
+@media(max-width:960px){.card-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:640px){.card-grid{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:1.1rem;transition:.15s transform}
+.card:hover{transform:translateY(-2px)}
+.card h3{margin:.25rem 0 .3rem;font-size:1.05rem;letter-spacing:-.01em}
+.card p{margin:0;color:var(--muted);font-size:.93rem;line-height:1.5}
+.kicker{font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700;margin:0 0 .6rem}
+.two-ways{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:2rem 0}
+@media(max-width:800px){.two-ways{grid-template-columns:1fr}}
+.way{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:1.4rem;position:relative;overflow:hidden}
+.way .num{position:absolute;top:1rem;right:1.2rem;font-size:2.8rem;font-weight:900;opacity:.06}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin:1.5rem 0}
+@media(max-width:800px){.steps{grid-template-columns:1fr}}
+.step{border:1px solid var(--line);background:var(--card);border-radius:20px;padding:1.2rem}
+.step .big{font-size:2.2rem;font-weight:900;letter-spacing:-.04em;line-height:1}
+.step .label{font-weight:800;margin-top:.2rem}
+.dark{margin:3rem 0 0;background:var(--dark);color:#f5f5f3;border-radius:28px;padding:2rem 1.2rem;position:relative;overflow:hidden}
+.dark .container{color:#f5f5f3}
+.flow{display:flex;align-items:center;justify-content:center;gap:.7rem;flex-wrap:wrap;margin:1.2rem 0;font-family:ui-monospace, SFMono-Regular, Menlo, monospace;font-size:.95rem}
+.flow .box{background:#1b1b1b;border:1px solid #2a2a2a;border-radius:999px;padding:.5rem .95rem}
+.flow .arrow{opacity:.6}
+.pricing{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin:1.5rem 0}
+@media(max-width:900px){.pricing{grid-template-columns:1fr}}
+.price{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:1.3rem}
+.price.featured{border-color:#000;box-shadow:0 12px 30px rgba(0,0,0,.08)}
+.price .amt{font-size:2.2rem;font-weight:900;letter-spacing:-.04em}
+.price ul{padding-left:1.1rem;color:var(--muted);line-height:1.7;font-size:.92rem}
+.faq{display:grid;grid-template-columns:1fr 1fr;gap:0 2rem}
+@media(max-width:800px){.faq{grid-template-columns:1fr}}
+.faq-item{border-top:1px solid var(--line);padding:1.1rem 0}
+.faq-item b{display:block;margin-bottom:.25rem}
+.footer{border-top:1px solid var(--line);padding:2rem 0 3rem;margin-top:2rem;color:var(--muted);font-size:.9rem}
+.mono{font-family:ui-monospace, SFMono-Regular, Menlo, monospace}
+.modal-backdrop{position:fixed;inset:0;background:rgba(15,15,15,.52);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;z-index:100;padding:1rem}
+.modal-backdrop.open{display:flex}
+.modal{width:min(640px,98vw);background:#fff;border-radius:22px;border:1px solid #e9e9e9;box-shadow:0 20px 80px rgba(0,0,0,.18);overflow:hidden}
+.modal-h{padding:1.1rem 1.2rem;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
+.modal-b{padding:1.15rem 1.2rem;display:grid;gap:.95rem}
+.input{width:100%;border:1px solid var(--line);background:#fbf9f7;border-radius:12px;padding:.78rem .9rem;font-size:.95rem;outline:none}
+.input:focus{border-color:#000;box-shadow:0 0 0 3px rgba(0,0,0,.06)}
+.row{display:flex;gap:.6rem;align-items:center}
+.row .input{flex:1}
+.chk{display:flex;gap:.6rem;align-items:flex-start;font-size:.92rem;line-height:1.45}
+.chk input{margin-top:.2rem}
+.accordion{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.acc-h{padding:.8rem .9rem;background:#fbf9f7;display:flex;justify-content:space-between;align-items:center;cursor:pointer;font-weight:600;font-size:.93rem}
+.acc-c{padding:.9rem .95rem;display:none;color:var(--muted);font-size:.9rem;line-height:1.55}
+.acc-c.open{display:block}
+.note{font-size:.78rem;color:var(--muted);background:#f7f3ef;border:1px dashed #e6ddd4;border-radius:10px;padding:.55rem .7rem}
+.codeblock{background:#0f0f0f;color:#eaeaea;border-radius:12px;padding:.9rem 1rem;font-family:ui-monospace,Menlo,monospace;font-size:.81rem;overflow:auto}
+.status{font-size:.84rem;padding:.5rem .7rem;border-radius:10px;border:1px solid var(--line);background:var(--pill);display:none}
+.status.show{display:block}
+.status.error{background:#fff1f1;border-color:#ffd1d1}
+.status.ok{background:#effff1;border-color:#c4f0c5}
+</style>
+</head>
+<body>
+<header class="nav">
+  <div class="logo"><span class="logo-dot"></span> Ranvedix</div>
+  <div class="links">
+    <span class="hide-m">Producto</span>
+    <span class="hide-m">Docs</span>
+    <span class="hide-m">Precios</span>
+    <button class="btn small" id="openModalTop">Conectar WhatsApp</button>
+  </div>
+</header>
+
+<main class="container">
+  <section class="hero">
+    <div>
+      <div class="badge">Tech Provider sin verificacion — OLD flow sin config_id</div>
+      <h1 class="h1">Tus mensajes van a todas partes excepto a traves de nosotros</h1>
+      <p class="lead">
+        <b>Your customers messages go everywhere except through us.</b><br/>
+        Router message-blind para WhatsApp Cloud API. Self-serve con <span class="mono">FB.login</span> sin <span class="mono">config_id</span>, sin WABA prestado, sin datos quemados. Override directo a tu webhook.
+        <br/><span class="mono" style="font-size:.82rem;color:#111;background:#f3efe9;border:1px solid var(--line);padding:.15rem .4rem;border-radius:999px">Funciona sin verificar portafolio en modo desarrollo - flujo self-serve</span>
+      </p>
+      <div class="hero-actions">
+        <button class="btn" id="openModalHero">Launch signup -></button>
+        <a class="btn outline" href="#how">Ver flujo</a>
+        <button class="btn ghost" onclick="document.getElementById('pricing').scrollIntoView({behavior:'smooth'})">$9/mes para empezar</button>
+      </div>
+      <div class="trust">
+        <span class="badge">Meta Tech Provider</span>
+        <span class="badge">Official Cloud API</span>
+        <span class="badge">Message-blind</span>
+        <span class="badge">Per-tenant</span>
+        <span class="badge">Sin config_id</span>
+      </div>
+    </div>
+    <div>
+      <div class="card" style="border-radius:24px;padding:1.2rem">
+        <div class="kicker">Live routing preview — message-blind</div>
+        <div class="codeblock" id="previewCode">// OLD flow: no config_id
+FB.login(r => {
+  // r.authResponse.code -> backend
+}, {
+  scope: 'whatsapp_business_management,whatsapp_business_messaging,business_management',
+  extras: {
+    featureType: 'whatsapp_business_app_onboarding',
+    sessionInfoVersion: 3
+  }
+})
+
+// backend
+// GET /oauth/access_token?client_id=APP_ID&client_secret=APP_SECRET&code=CODE
+// GET me/businesses
+// GET {business}/owned_whatsapp_business_accounts
+// GET {waba}/phone_numbers
+// POST {waba}/subscribed_apps {override_callback_uri: destination_url}</div>
+        <div style="display:flex;gap:.6rem;margin-top:.9rem;flex-wrap:wrap">
+          <div class="badge">Drop messages</div>
+          <div class="badge">Keep statuses</div>
+          <div class="badge">No Kiamber Corp error</div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:.8rem;background:#fbf9f7">
+        <div class="kicker">Que no guardamos</div>
+        <p>Contenido de mensajes, media, contactos. Solo lifecycle: sent / delivered / read / failed.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="kicker">Producto — 6 pilares</div>
+    <div class="card-grid">
+      <div class="card"><h3>Router</h3><p>Override <span class="mono">override_callback_uri</span> directo a tu servidor. Meta envia eventos a tu destino, no a nosotros.</p></div>
+      <div class="card"><h3>Message-Blind</h3><p>Webhook descarta <span class="mono">messages</span>, solo persiste statuses en <span class="mono">lifecycle_events:{phone_id}</span>.</p></div>
+      <div class="card"><h3>No Burned Data</h3><p>Sin URLs quemadas, sin tokens hardcodeados, sin telefonos de prueba. Placeholders vacios, valores en KV cifrado AES-256-GCM.</p></div>
+      <div class="card"><h3>Multi-tenant</h3><p>Un WABA por cliente, <span class="mono">waba_map:{phone_id}</span> aislado, busqueda por business, soporte para agencias SaaS.</p></div>
+      <div class="card"><h3>Logs & Lifecycle</h3><p><span class="mono">/api/logs?phone_id=</span> para auditoria, debugging y billing sin exponer PII.</p></div>
+      <div class="card"><h3>Encrypted Vault</h3><p>User access tokens y verify tokens cifrados con <span class="mono">ENCRYPTION_KEY</span>. Nunca en texto plano en logs.</p></div>
+    </div>
+  </section>
+
+  <section class="two-ways">
+    <div class="way">
+      <div class="num">01</div>
+      <div class="kicker">Para SaaS</div>
+      <h3 style="margin:.2rem 0">Self-serve, sin pasar por revision</h3>
+      <p style="color:var(--muted);line-height:1.6">Tu cliente entra, pone su destino <span class="mono">https://your-app.com/webhook/whatsapp</span>, genera su verify token, da click en Launch. Nosotros intercambiamos code, detectamos su WABA propio, intentamos override, guardamos mapping. Cero intervencion tuya.</p>
+      <div class="codeblock" style="margin-top:.6rem">destination_url = your server
+verify_token  = random per tenant</div>
+    </div>
+    <div class="way" style="background:#0f0f0f;color:#f5f5f3;border-color:#1e1e1e">
+      <div class="num" style="color:#fff">02</div>
+      <div class="kicker" style="color:#aaa">Para agencias</div>
+      <h3 style="margin:.2rem 0">White-label, tu marca</h3>
+      <p style="color:#b7b7b7;line-height:1.6">Instala esta plantilla en tu dominio, tu logo, tu pricing. El flujo OLD evita "Kiamber Corp no puede incorporar clientes" porque no usa system_user. Es el mismo cliente que hace embedded onboarding, no tu Tech Provider incorporando por el.</p>
+      <div class="codeblock" style="background:#1a1a1a;border-color:#2a2a2a">flow: OLD_SELF_SERVE_NO_CONFIG_ID
+no config_id 1889... no system_user</div>
+    </div>
+  </section>
+
+  <section id="how">
+    <div class="kicker">Como funciona — self-serve</div>
+    <div class="steps">
+      <div class="step"><div class="big">01</div><div class="label">Onboard</div><p style="color:var(--muted);line-height:1.5">Cliente hace <span class="mono">FB.login</span> con scope <span class="mono">whatsapp_business_management,whatsapp_business_messaging,business_management</span> y <span class="mono">extras {featureType: 'whatsapp_business_app_onboarding', sessionInfoVersion: 3}</span>. Obtienes <span class="mono">code</span>.</p></div>
+      <div class="step"><div class="big">02</div><div class="label">Route</div><p style="color:var(--muted);line-height:1.5">Backend <span class="mono">/api/exchange</span> cambia code por user token, resuelve business - owned WABA - phone_numbers, luego <span class="mono">POST {waba_id}/subscribed_apps override_callback_uri=destination_url</span> con verify_token del cliente.</p></div>
+      <div class="step"><div class="big">03</div><div class="label">Monitor</div><p style="color:var(--muted);line-height:1.5">Tu webhook propio recibe mensajes directos. Nuestro <span class="mono">/api/webhook</span> es fallback message-blind y guarda solo lifecycle en <span class="mono">lifecycle_events:{phone_id}</span>. Lista conexiones en <span class="mono">/api/connections</span>.</p></div>
+    </div>
+  </section>
+
+  <section class="dark">
+    <div class="container" style="padding:0">
+      <div class="kicker" style="color:#aaa">Privacidad por diseno</div>
+      <h2 style="font-size:clamp(1.6rem,3vw,2.4rem);letter-spacing:-.03em;margin:.2rem 0 0;line-height:1.05">Your customer -> Meta Cloud API -> Your server</h2>
+      <div class="flow">
+        <div class="box">Your customer</div><div class="arrow">-></div>
+        <div class="box">Meta Cloud API</div><div class="arrow">-></div>
+        <div class="box" style="background:#fff;color:#000;border-color:#fff">Your server</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem">
+        <div class="card" style="background:#151515;border-color:#222;color:#ddd">
+          <b style="color:#fff">Nosotros NO vemos</b>
+          <ul style="color:#aaa;line-height:1.7;margin:.5rem 0 0">
+            <li>Texto de mensajes</li>
+            <li>Imagenes, audios, archivos</li>
+            <li>Numeros de clientes finales</li>
+            <li>Catalogos o plantillas</li>
+          </ul>
+        </div>
+        <div class="card" style="background:#151515;border-color:#222;color:#ddd">
+          <b style="color:#fff">Nosotros SI guardamos (cifrado)</b>
+          <ul style="color:#aaa;line-height:1.7;margin:.5rem 0 0">
+            <li>phone_number_id -> destination_url</li>
+            <li>waba_id, business_id</li>
+            <li>lifecycle: sent, delivered, read, failed</li>
+            <li>errores de suscripcion override</li>
+          </ul>
+        </div>
+      </div>
+      <div style="margin-top:1rem;display:flex;gap:.6rem;flex-wrap:wrap">
+        <span class="badge" style="background:#1e1e1e;border-color:#2a2a2a;color:#ccc">Message-blind</span>
+        <span class="badge" style="background:#1e1e1e;border-color:#2a2a2a;color:#ccc">AES-256-GCM</span>
+        <span class="badge" style="background:#1e1e1e;border-color:#2a2a2a;color:#ccc">Per-tenant verify_token</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="pricing" style="margin-top:2.2rem">
+    <div class="kicker">Pricing — simple</div>
+    <div class="pricing">
+      <div class="price"><div class="kicker">Starter</div><div class="amt">$9</div><div style="color:var(--muted)">/mes + consumo Meta</div><ul><li>Hasta 3 numeros</li><li>Logs lifecycle 7 dias</li><li>Router message-blind</li><li>Soporte comunidad</li></ul><button class="btn outline" style="width:100%;margin-top:.8rem" onclick="document.getElementById('openModalHero').click()">Empezar $9</button></div>
+      <div class="price featured"><div class="kicker">Growth — popular</div><div class="amt">$49</div><div style="color:var(--muted)">/mes + consumo Meta</div><ul><li>Numeros ilimitados</li><li>Logs 90 dias + webhooks retry logs</li><li>Multi-tenant dashboard</li><li>Override callback garantizado</li></ul><button class="btn" style="width:100%;margin-top:.8rem" onclick="document.getElementById('openModalHero').click()">Launch Growth</button></div>
+      <div class="price"><div class="kicker">Scale</div><div class="amt">$149</div><div style="color:var(--muted)">/mes + consumo Meta</div><ul><li>Todo de Growth</li><li>White-label + dominio propio</li><li>Soporte tecnico directo</li><li>SLO + auditoria</li></ul><button class="btn outline" style="width:100%;margin-top:.8rem">Hablar con ventas</button></div>
+    </div>
+  </section>
+
+  <section style="margin-top:1.8rem">
+    <div class="kicker">FAQ — sin rodeos</div>
+    <div class="faq">
+      <div class="faq-item"><b>Por que falla con config_id y dice Kiamber Corp no puede incorporar?</b><span style="color:var(--muted)">Porque ese flow usa system_user y requiere verificacion de Tech Provider. El OLD flow sin config_id es self-serve, el cliente incorpora su propio WABA, no tu empresa incorporando por el.</span></div>
+      <div class="faq-item"><b>Necesito verificacion de portafolio?</b><span style="color:var(--muted)">No para desarrollo. Esta plantilla funciona sin verificar, mostrando nota "Funciona sin verificar portafolio en modo desarrollo - flujo self-serve". Para produccion masiva, eventualmente verifica, pero puedes operar en dev.</span></div>
+      <div class="faq-item"><b>Donde va TOKEN_QUEMADO o URLs quemadas?</b><span style="color:var(--muted)">A ningun lado. Esta version CLEAN no tiene datos quemados. El modal tiene placeholders vacios: destination https://your-app.com/webhook/whatsapp y verify token your-webhook-verify-token.</span></div>
+      <div class="faq-item"><b>Como se hace el FB SDK correcto?</b><span style="color:var(--muted)">window.fbAsyncInit = function() no async, loader (function(d,s,id)...), FB.init {appId: '811281598468466', autoLogAppEvents:true, xfbml:true, version:'v20.0'}. Nunca con async/await en fbAsyncInit.</span></div>
+      <div class="faq-item"><b>Que guarda /api/webhook?</b><span style="color:var(--muted)">Solo lifecycle_events (sent, delivered, read, failed). Si llegan messages, los cuenta y los descarta sin persistir contenido, sin reenviar. Message-blind por diseno.</span></div>
+      <div class="faq-item"><b>Y si subscribed_apps override falla?</b><span style="color:var(--muted)">Guardamos mapping igual. Puedes suscribir manual desde App Dashboard > Webhooks > WABA subscription o reintentar. El token y destino quedan cifrados en KV.</span></div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:1rem">
+      <div><b style="color:#000">Ranvedix</b> — Tech Provider router message-blind. OLD flow sin config_id. Hecho para evitar Kiamber Corp error.</div>
+      <div>APP_ID solo en JS constante, no en texto visible. No burned data. Build final SIN CONFIG_ID SIN VERIFICAR.</div>
+    </div>
+  </footer>
+</main>
+
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-h">
+      <b>Conectar WhatsApp — self-serve OLD flow</b>
+      <button class="btn ghost small" id="closeModalBtn">X</button>
+    </div>
+    <div class="modal-b">
+      <div>
+        <div class="kicker">Destination webhook URL</div>
+        <input class="input" id="destinationUrl" placeholder="https://your-app.com/webhook/whatsapp" value=""/>
+        <div class="note" style="margin-top:.45rem">Tu servidor recibira eventos directo de Meta via override_callback_uri</div>
+      </div>
+      <div>
+        <div class="kicker">Verify token</div>
+        <div class="row">
+          <input class="input" id="verifyToken" placeholder="your-webhook-verify-token" value=""/>
+          <button class="btn ghost small" id="genTokenBtn" type="button">Generate random</button>
+        </div>
+      </div>
+      <label class="chk"><input type="checkbox" id="liveCheckbox"/> Number is live on WhatsApp Business app — marca si el numero esta activo en la app movil (migracion). Si no, deja desmarcado.</label>
+
+      <div class="accordion" id="blockersAcc">
+        <div class="acc-h"><span>Before you start — common blockers</span><span>v</span></div>
+        <div class="acc-c">
+          <ul style="margin:0;padding-left:1.1rem">
+            <li>Debes ser admin del Business Manager que posee el WABA.</li>
+            <li>El numero no debe estar en otro Cloud API provider con override activo.</li>
+            <li>Si el numero esta en App API, migrar primero o desvincular.</li>
+            <li>Si ves "Kiamber Corp no puede incorporar clientes", estas usando config_id flow — usa este OLD flow sin config_id.</li>
+            <li>Este flujo funciona sin verificacion de portafolio en modo desarrollo.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="note">Funciona sin verificar portafolio en modo desarrollo - flujo self-serve, sin config_id, sin system_user</div>
+
+      <div class="status" id="statusBox"></div>
+
+      <div style="display:flex;gap:.6rem;justify-content:flex-end">
+        <button class="btn ghost" id="cancelBtn">Cancel</button>
+        <button class="btn" id="launchBtn">Launch signup</button>
+      </div>
+
+      <div class="codeblock" style="font-size:.76rem;display:none" id="resultBox"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = s=>document.querySelector(s);
+function openModal(){ document.getElementById('modalBackdrop').classList.add('open'); }
+function closeModal(){ document.getElementById('modalBackdrop').classList.remove('open'); }
+document.getElementById('openModalTop')?.addEventListener('click', openModal);
+document.getElementById('openModalHero')?.addEventListener('click', openModal);
+document.getElementById('closeModalBtn')?.addEventListener('click', closeModal);
+document.getElementById('cancelBtn')?.addEventListener('click', closeModal);
+document.getElementById('modalBackdrop')?.addEventListener('click', (e)=>{ if(e.target.id==='modalBackdrop') closeModal(); });
+document.querySelector('#blockersAcc .acc-h')?.addEventListener('click', ()=>{
+  const c = document.querySelector('#blockersAcc .acc-c');
+  c.classList.toggle('open');
+});
+document.getElementById('genTokenBtn')?.addEventListener('click', ()=>{
+  const chars='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+  let t=''; for(let i=0;i<32;i++) t+=chars[Math.floor(Math.random()*chars.length)];
+  document.getElementById('verifyToken').value=t;
+});
+function showStatus(msg, type){
+  const box=document.getElementById('statusBox');
+  box.textContent=msg;
+  box.className='status show ' + (type||'');
+  box.style.display='block';
+}
+function hideStatus(){ const box=document.getElementById('statusBox'); box.className='status'; box.style.display='none'; }
+
+// FB SDK - FIXED: window.fbAsyncInit = function() NOT async
+const APP_ID = '811281598468466';
+
+window.fbAsyncInit = function() {
+  FB.init({
+    appId: APP_ID,
+    autoLogAppEvents: true,
+    xfbml: true,
+    version: 'v20.0'
+  });
+  console.log('FB SDK initialized OLD flow no config_id');
+};
+
+(function(d,s,id){
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "https://connect.facebook.net/en_US/sdk.js";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document,'script','facebook-jssdk'));
+
+document.getElementById('launchBtn')?.addEventListener('click', async ()=>{
+  const dest = (document.getElementById('destinationUrl')?.value||'').trim();
+  const vtoken = (document.getElementById('verifyToken')?.value||'').trim();
+  const isLive = !!document.getElementById('liveCheckbox')?.checked;
+  if(!dest){
+    showStatus('Pon tu Destination webhook URL (placeholder https://your-app.com/webhook/whatsapp)', 'error');
+    return;
+  }
+  try { new URL(dest); } catch {
+    showStatus('Destination URL invalido', 'error');
+    return;
+  }
+  if(!vtoken){
+    showStatus('Pon tu verify token (placeholder your-webhook-verify-token)', 'error');
+    return;
+  }
+  hideStatus();
+  const btn=document.getElementById('launchBtn');
+  btn.disabled=true; btn.textContent='Abriendo Facebook...';
+  if(typeof FB === 'undefined'){
+    showStatus('FB SDK aun cargando, espera 2s y reintenta', 'error');
+    btn.disabled=false; btn.textContent='Launch signup';
+    return;
+  }
+  FB.login(function(response){
+    console.log('FB.login response', response);
+    btn.disabled=false; btn.textContent='Launch signup';
+    if(!response || response.status !== 'connected'){
+      showStatus('Login cancelado o no autorizado. Asegurate de aceptar permisos.', 'error');
+      return;
+    }
+    const code = response.authResponse && response.authResponse.code;
+    if(!code){
+      showStatus('No se obtuvo code desde FB.login. Este OLD flow requiere code. Reintenta; extras debe ser featureType whatsapp_business_app_onboarding sessionInfoVersion 3', 'error');
+      return;
+    }
+    showStatus('Code recibido, intercambiando en backend...', 'ok');
+    btn.disabled=true; btn.textContent='Exchanging...';
+    fetch('/api/exchange', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        code: code,
+        destination_url: dest,
+        verify_token: vtoken,
+        is_live_on_whatsapp: isLive
+      })
+    }).then(async r=>{
+      const j = await r.json();
+      btn.disabled=false; btn.textContent='Launch signup';
+      if(!r.ok){
+        showStatus('Error intercambio: ' + (j.error||'unknown') + ' ' + (j.details? JSON.stringify(j.details).slice(0,300):''), 'error');
+        const resultEl=document.getElementById('resultBox');
+        resultEl.style.display='block';
+        resultEl.textContent=JSON.stringify(j,null,2);
+        return;
+      }
+      showStatus('Conectado! WABA '+j.waba_id+' con '+j.phone_numbers.length+' numeros. Override: '+(j.subscribed_apps_result?'OK':'guardado, verifica manual'), 'ok');
+      const resultEl=document.getElementById('resultBox');
+      resultEl.style.display='block';
+      resultEl.textContent=JSON.stringify(j,null,2);
+    }).catch(err=>{
+      btn.disabled=false; btn.textContent='Launch signup';
+      showStatus('Fetch error '+err.message, 'error');
+    });
+  }, {
+    scope: 'whatsapp_business_management,whatsapp_business_messaging,business_management',
+    extras: {
+      featureType: 'whatsapp_business_app_onboarding',
+      sessionInfoVersion: 3
+    }
+  });
+});
+</script>
+</body>
+</html>
