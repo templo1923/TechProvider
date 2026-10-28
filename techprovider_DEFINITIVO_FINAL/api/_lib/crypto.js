@@ -1,0 +1,5 @@
+const crypto=require('crypto');
+function getKey(){ let key=process.env.ENCRYPTION_KEY||process.env.FACEBOOK_APP_SECRET||'dev-key-needs-32-chars-123456'; if(Buffer.byteLength(key)!==32){ key=crypto.createHash('sha256').update(key).digest(); } else { key=Buffer.from(key); } return key; }
+function encrypt(text){ if(!text) return text; try{ const key=getKey(); const iv=crypto.randomBytes(12); const cipher=crypto.createCipheriv('aes-256-gcm', key, iv); let enc=cipher.update(String(text),'utf8','base64'); enc+=cipher.final('base64'); const tag=cipher.getAuthTag().toString('base64'); return `${iv.toString('base64')}:${tag}:${enc}`; }catch{ return text; } }
+function decrypt(payload){ if(!payload) return payload; try{ if(!payload.includes(':')) return payload; const [ivB64,tagB64,enc]=payload.split(':'); const key=getKey(); const iv=Buffer.from(ivB64,'base64'); const tag=Buffer.from(tagB64,'base64'); const decipher=crypto.createDecipheriv('aes-256-gcm', key, iv); decipher.setAuthTag(tag); let dec=decipher.update(enc,'base64','utf8'); dec+=decipher.final('utf8'); return dec; }catch{ return payload; } }
+module.exports={encrypt,decrypt};
