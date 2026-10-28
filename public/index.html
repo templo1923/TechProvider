@@ -1,565 +1,679 @@
 <!doctype html>
-<html lang="es">
+<html lang="es" class="dark">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>TechProvider — Tus mensajes van a todas partes excepto a través de nosotros</title>
-<meta name="description" content="Conectas tu número en 2 minutos. Los mensajes van directo a tu CRM. White-label, message-blind, coexistencia."/>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://cdn.tailwindcss.com"></script>
-<script>
-tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','system-ui'],mono:['JetBrains Mono','monospace']},colors:{brand:{50:'#f0fdf4',100:'#dcfce7',500:'#22c55e',600:'#16a34a',950:'#052e16'}},boxShadow:{soft:'0 20px 80px -20px rgba(0,0,0,.15)',card:'0 8px 30px rgba(0,0,0,.06)'}}}}
-</script>
-<style>
-*{ -webkit-font-smoothing:antialiased }
-body{ background:#fbfcfe }
-.grid-dot{ background-image: radial-gradient(circle at 1px 1px, rgba(0,0,0,.07) 1px, transparent 0); background-size:24px 24px }
-.glass{ backdrop-filter: blur(18px); background: rgba(255,255,255,.82); border:1px solid rgba(255,255,255,.6) }
-.hero-grad{ background: radial-gradient(1200px 600px at 20% -10%, rgba(244,114,182,.12), transparent), radial-gradient(900px 500px at 80% 0%, rgba(96,165,250,.14), transparent), radial-gradient(800px 400px at 50% 120%, rgba(74,222,128,.10), transparent) }
-.pill{ border:1px solid rgba(0,0,0,.08); background:#fff; box-shadow:0 4px 18px rgba(0,0,0,.05) }
-.feature-icon{ width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px }
- details > summary{ list-style:none } details > summary::-webkit-details-marker{ display:none }
- .mono{ font-family: JetBrains Mono, monospace }
- @keyframes pulseGlow{0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,.4)}50%{box-shadow:0 0 0 12px rgba(34,197,94,0)}}
- .pulse{ animation:pulseGlow 2.2s infinite }
-</style>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Ranvedix — Router Message-Blind para WhatsApp Cloud API</title>
+  <meta name="description" content="Infraestructura WhatsApp Cloud API sin retención de mensajes. Enrutamiento directo a tu webhook."/>
+  
+  <!-- Tailwind CSS & Lucide Icons -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://connect.facebook.net"/>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['Geist Mono', 'monospace']
+          },
+          colors: {
+            brand: {
+              50: '#ecfdf5',
+              500: '#10b981',
+              600: '#059669',
+              900: '#064e3b'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background-color: #09090b; color: #f4f4f5; font-feature-settings: "cv02", "cv03", "cv04", "cv11"; }
+    .glass-card {
+      background: radial-gradient(100% 100% at 50% 0%, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .glass-card:hover {
+      border-color: rgba(255, 255, 255, 0.16);
+    }
+    .glow-dot {
+      box-shadow: 0 0 12px #10b981;
+    }
+  </style>
 </head>
-<body class="font-sans text-zinc-900 antialiased">
+<body class="min-h-screen font-sans antialiased selection:bg-brand-500/30 selection:text-brand-50">
 
-<header class="sticky top-0 z-40 border-b border-zinc-100/80 glass">
-  <div class="mx-auto max-w-[1220px] px-6 py-3.5 flex items-center justify-between">
-    <div class="flex items-center gap-3">
-      <div class="h-9 w-9 rounded-xl bg-zinc-900 text-white flex items-center justify-center font-extrabold text-[16px]">T</div>
-      <span class="font-bold tracking-tight text-[18px]">TechProvider</span>
-      <span class="hidden sm:inline-flex ml-2 px-2.5 py-1 rounded-full text-[10px] leading-none tracking-widest font-semibold border border-emerald-200 bg-emerald-50 text-emerald-700">WHITE-LABEL • MESSAGE-BLIND</span>
-    </div>
-    <nav class="flex items-center gap-1">
-      <button onclick="navigate('inicio')" id="nav-inicio" class="px-4 py-2 rounded-full text-sm font-semibold bg-zinc-900 text-white">Inicio</button>
-      <button onclick="navigate('dashboard')" id="nav-dashboard" class="px-4 py-2 rounded-full text-sm font-medium text-zinc-600 hover:text-zinc-900">Dashboard</button>
-      <button onclick="openConnectModal()" class="ml-3 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#25D366] hover:bg-[#20bd5a] text-white text-sm font-bold shadow-sm transition">Conectar número</button>
-    </nav>
-  </div>
-</header>
-
-<main id="view-inicio" class="hero-grad">
-  <section class="mx-auto max-w-[1220px] px-6 pt-14 pb-10">
-    <div class="flex flex-wrap items-center gap-2 mb-7">
-      <div class="pill inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-medium">● Meta Official API</div>
-      <div class="pill inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-medium">🔒 Message-Blind</div>
-      <div class="pill inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-medium">📱 Coexistencia</div>
-      <div class="pill inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-medium">⏱ 15 días guardado</div>
-    </div>
-
-    <div class="grid lg:grid-cols-[1.05fr_.95fr] gap-10 items-start">
-      <div>
-        <h1 class="text-[44px] sm:text-[56px] leading-[0.95] tracking-[-0.04em] font-extrabold">
-          Tus mensajes<br/>
-          van a todas partes<br/>
-          <span class="text-zinc-400">excepto a través de</span><br/>
-          nosotros.
-        </h1>
-        <p class="mt-5 text-[18px] leading-7 text-zinc-600 max-w-[46ch]">Conectas tu número en 2 minutos. Los mensajes van <span class="font-semibold text-zinc-900">directo a tu CRM</span> por <span class="mono text-[13px] bg-zinc-900 text-white px-2 py-0.5 rounded">override_callback_uri</span>. Nosotros solo guardamos salud y reportes.</p>
-
-        <div class="mt-8 flex flex-wrap gap-3">
-          <button onclick="openConnectModal()" class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-zinc-900 text-white font-semibold shadow-soft hover:bg-black transition">Conectar número en 2 min →</button>
-          <button onclick="navigate('dashboard')" class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white border border-zinc-200 font-medium hover:bg-zinc-50">Ver dashboard demo</button>
-        </div>
-
-        <div class="mt-8 flex items-center gap-3 text-[11px] tracking-wide text-zinc-500">
-          <span class="inline-flex h-5 w-5 rounded-full bg-emerald-100 text-emerald-600 items-center justify-center">✓</span> Sin mensajes almacenados · Sin intermediarios · White-label total
-        </div>
-
-        <div class="mt-10">
-          <p class="text-[11px] tracking-widest font-semibold text-zinc-400 uppercase mb-3">Confían los equipos que escalan en LatAm</p>
-          <div class="flex flex-wrap gap-2">
-            <div class="pill px-3 py-1.5 rounded-full text-[11px]">Meta Tech Provider</div>
-            <div class="pill px-3 py-1.5 rounded-full text-[11px]">Coexistencia nativa</div>
-            <div class="pill px-3 py-1.5 rounded-full text-[11px]">CRM directo</div>
-            <div class="pill px-3 py-1.5 rounded-full text-[11px]">Calidad GREEN</div>
-            <div class="pill px-3 py-1.5 rounded-full text-[11px]">EU/US Infra</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="relative">
-        <div class="absolute -inset-6 bg-gradient-to-br from-violet-100 via-blue-50 to-emerald-50 rounded-[28px] blur-[18px] opacity-80"></div>
-        <div class="relative rounded-[20px] border border-white shadow-[0_24px_80px_-20px_rgba(0,0,0,.25)] bg-white overflow-hidden">
-          <div class="flex items-center gap-2 px-5 py-3 border-b border-zinc-100 bg-zinc-50/70">
-            <span class="h-2.5 w-2.5 rounded-full bg-zinc-300"></span>
-            <span class="h-2.5 w-2.5 rounded-full bg-zinc-300"></span>
-            <span class="h-2.5 w-2.5 rounded-full bg-zinc-300"></span>
-            <span class="mono text-[11px] text-zinc-500 ml-3">techprovider / conexiones</span>
-            <span class="ml-auto text-[11px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-medium">Live</span>
-          </div>
-          <div class="grid grid-cols-[180px_1fr] min-h-[340px]">
-            <div class="border-r border-zinc-100 p-3 bg-zinc-50/50">
-              <div class="rounded-xl bg-zinc-900 text-white px-3 py-2 text-[12px] font-semibold">📊 Tus números</div>
-              <div class="mt-3 space-y-2">
-                <div class="h-3 rounded bg-zinc-200"></div>
-                <div class="h-3 rounded bg-zinc-200 w-2/3"></div>
-                <div class="mt-4 p-3 rounded-xl border border-emerald-200 bg-emerald-50">
-                  <div class="text-[11px] font-bold text-emerald-800">+XX XXX XXX XXxx • GREEN</div>
-                  <div class="text-[10px] text-emerald-700 mt-1">Calidad alta • TIER 1K</div>
-                </div>
-                <div class="p-3 rounded-xl border border-zinc-200 bg-white">
-                  <div class="text-[11px] text-zinc-500">+XX XXX XXX XXxx</div>
-                  <div class="text-[10px] text-zinc-400 mt-1">Conectado</div>
-                </div>
-              </div>
-            </div>
-            <div class="p-5">
-              <div class="flex items-center justify-between">
-                <div class="font-semibold">+XX XXX XXX XXxx</div>
-                <div class="text-[11px] px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 font-medium">Conectado • GREEN</div>
-              </div>
-              <div class="mt-4 grid grid-cols-3 gap-3">
-                <div class="rounded-xl border border-zinc-200 p-3"><div class="text-[11px] text-zinc-500">Calidad</div><div class="text-[12px] font-semibold text-emerald-700 mt-1">GREEN • Alta</div></div>
-                <div class="rounded-xl border border-zinc-200 p-3"><div class="text-[11px] text-zinc-500">Límite</div><div class="text-[12px] font-semibold mt-1">1,000 / día</div></div>
-                <div class="rounded-xl border border-zinc-200 p-3"><div class="text-[11px] text-zinc-500">Destino</div><div class="mono text-[11px] mt-1 truncate">tu-crm.com/webhook</div></div>
-              </div>
-              <div class="mt-4 rounded-xl bg-zinc-900 text-zinc-200 p-3 mono text-[11px]">{"ok":true,"blind":true,"count":2,"message":"Message-blind enforced"}</div>
-              <div class="mt-3 text-[11px] text-zinc-500 leading-5">↑ Tus mensajes nunca pasan por nosotros. Van directo a tu CRM por override_callback_uri. Nosotros solo guardamos salud y reportes.</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="mx-auto max-w-[1220px] px-6 py-16">
-    <div class="grid md:grid-cols-3 gap-4">
-      <div class="rounded-[18px] border border-zinc-200 bg-white p-6 shadow-card">
-        <div class="feature-icon bg-zinc-900 text-white">🔌</div>
-        <h3 class="mt-4 font-bold text-[16px]">Conecta sin desconectar</h3>
-        <p class="mt-2 text-[14px] leading-6 text-zinc-600">Coexistencia nativa. Tu número sigue en la app del teléfono y a la vez en Cloud API. Sin perder historial.</p>
-        <div class="mt-4 inline-flex items-center gap-2 text-[11px] mono px-2 py-1 rounded-full bg-zinc-100">platform_type: CLOUD_API</div>
-      </div>
-      <div class="rounded-[18px] border border-zinc-200 bg-white p-6 shadow-card">
-        <div class="feature-icon bg-emerald-500 text-white">🔒</div>
-        <h3 class="mt-4 font-bold text-[16px]">Mensajes nunca pasan por nosotros</h3>
-        <p class="mt-2 text-[14px] leading-6 text-zinc-600">Message-blind real. El webhook de Meta apunta directo a tu CRM con override_callback_uri. Nosotros solo vemos estados.</p>
-        <div class="mt-4 inline-flex items-center gap-2 text-[11px] mono px-2 py-1 rounded-full bg-emerald-50 text-emerald-700">blind:true</div>
-      </div>
-      <div class="rounded-[18px] border border-zinc-200 bg-white p-6 shadow-card">
-        <div class="feature-icon bg-blue-500 text-white">📈</div>
-        <h3 class="mt-4 font-bold text-[16px]">Calidad en tiempo real</h3>
-        <p class="mt-2 text-[14px] leading-6 text-zinc-600">GREEN / YELLOW / RED, tier, throughput y salud. Alertas antes de caída. Reporte copiable para clientes.</p>
-        <div class="mt-4 inline-flex items-center gap-2 text-[11px] mono px-2 py-1 rounded-full bg-blue-50 text-blue-700">quality_rating: GREEN</div>
-      </div>
-    </div>
-  </section>
-
-  <section class="mx-auto max-w-[1220px] px-6 py-10">
-    <h2 class="text-[28px] font-extrabold tracking-tight">Cómo funciona — 3 pasos, 2 minutos</h2>
-    <div class="mt-8 grid md:grid-cols-3 gap-4">
-      <div class="rounded-[18px] bg-white border border-zinc-200 p-6">
-        <div class="h-8 w-8 rounded-full bg-zinc-900 text-white flex items-center justify-center font-bold text-sm">1</div>
-        <h4 class="mt-4 font-bold">Pon tu destino</h4>
-        <p class="mt-2 text-[14px] leading-6 text-zinc-600">Tu CRM webhook: <span class="mono text-[12px] bg-zinc-100 px-1.5 py-0.5 rounded">https://tu-crm.com/webhook</span> y un verify token random. Nosotros lo encriptamos.</p>
-      </div>
-      <div class="rounded-[18px] bg-white border border-zinc-200 p-6">
-        <div class="h-8 w-8 rounded-full bg-zinc-900 text-white flex items-center justify-center font-bold text-sm">2</div>
-        <h4 class="mt-4 font-bold">Login con Meta</h4>
-        <p class="mt-2 text-[14px] leading-6 text-zinc-600">OLD flow sin config_id. <span class="mono text-[12px] bg-zinc-100 px-1.5 py-0.5 rounded">FB.login</span> con <span class="mono text-[12px]">whatsapp_business_app_onboarding</span>. Evita error Kiamber Corp.</p>
-      </div>
-      <div class="rounded-[18px] bg-white border border-zinc-200 p-6">
-        <div class="h-8 w-8 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-sm">3</div>
-        <h4 class="mt-4 font-bold">Directo a tu CRM</h4>
-        <p class="mt-2 text-[14px] leading-6 text-zinc-600">Hacemos POST a subscribed_apps con override_callback_uri. Desde ahí Meta envía todo directo a ti. Nosotros quedamos fuera del mensaje.</p>
-      </div>
-    </div>
-  </section>
-
-  <section class="mx-auto max-w-[1220px] px-6 py-16">
-    <h2 class="text-[28px] font-extrabold tracking-tight">Pricing white-label, listo para revender</h2>
-    <div class="mt-2 text-[14px] text-zinc-600">Cobra a tus clientes lo que quieras. Tu margen, tu marca.</div>
-    <div class="mt-8 grid md:grid-cols-3 gap-4">
-      <div class="rounded-[20px] border border-zinc-200 bg-white p-7">
-        <div class="text-[11px] tracking-widest font-semibold text-zinc-500">STARTER</div>
-        <div class="mt-3 flex items-baseline gap-2"><span class="text-[36px] font-extrabold">$9</span><span class="text-zinc-500">/mes</span></div>
-        <ul class="mt-5 space-y-2 text-[14px] text-zinc-700">
-          <li>• 1 número</li><li>• Message-blind</li><li>• Webhook directo</li><li>• Soporte mail</li>
-        </ul>
-        <button onclick="openConnectModal()" class="mt-6 w-full py-2.5 rounded-full border border-zinc-200 font-semibold hover:bg-zinc-50">Empezar</button>
-      </div>
-      <div class="rounded-[20px] border border-zinc-900 bg-zinc-900 text-white p-7 shadow-soft pulse">
-        <div class="text-[11px] tracking-widest font-semibold text-white/60">GROWTH — POPULAR</div>
-        <div class="mt-3 flex items-baseline gap-2"><span class="text-[36px] font-extrabold">$49</span><span class="text-white/60">/mes</span></div>
-        <ul class="mt-5 space-y-2 text-[14px] text-white/80">
-          <li>• 10 números</li><li>• Coexistencia</li><li>• Salud en tiempo real</li><li>• Reportes white-label</li>
-        </ul>
-        <button onclick="openConnectModal()" class="mt-6 w-full py-2.5 rounded-full bg-[#25D366] text-white font-bold hover:bg-[#20bd5a]">Conectar número</button>
-      </div>
-      <div class="rounded-[20px] border border-zinc-200 bg-white p-7">
-        <div class="text-[11px] tracking-widest font-semibold text-zinc-500">SCALE</div>
-        <div class="mt-3 flex items-baseline gap-2"><span class="text-[36px] font-extrabold">$149</span><span class="text-zinc-500">/mes</span></div>
-        <ul class="mt-5 space-y-2 text-[14px] text-zinc-700">
-          <li>• Ilimitados</li><li>• API completa</li><li>• Múltiples WABAs</li><li>• Soporte prioritario</li>
-        </ul>
-        <button onclick="openConnectModal()" class="mt-6 w-full py-2.5 rounded-full border border-zinc-200 font-semibold hover:bg-zinc-50">Hablar con ventas</button>
-      </div>
-    </div>
-  </section>
-
-  <section class="mx-auto max-w-[1220px] px-6 py-10 grid md:grid-cols-2 gap-10">
-    <div>
-      <h3 class="text-[20px] font-bold">FAQ</h3>
-      <div class="mt-4 space-y-3">
-        <details class="rounded-xl border border-zinc-200 bg-white p-4 open:shadow-card"><summary class="font-semibold text-[14px] cursor-pointer">¿Los mensajes pasan por ustedes? <span class="float-right">⌄</span></summary><p class="mt-3 text-[13px] leading-6 text-zinc-600">No. Message-blind real: usamos <span class="mono">override_callback_uri</span> y Meta envía directo a tu CRM. Nuestro webhook solo ve statuses y calidad si alguien nos apunta, pero borramos <span class="mono">messages</span>.</p></details>
-        <details class="rounded-xl border border-zinc-200 bg-white p-4"><summary class="font-semibold text-[14px] cursor-pointer">¿Necesito verificación de Meta? <span class="float-right">⌄</span></summary><p class="mt-3 text-[13px] leading-6 text-zinc-600">No para el OLD flow sin config_id. Usamos <span class="mono">FB.login</span> con <span class="mono">whatsapp_business_app_onboarding</span> sessionInfoVersion 3. Funciona sin verificación avanzada y evita Kiamber Corp error.</p></details>
-        <details class="rounded-xl border border-zinc-200 bg-white p-4"><summary class="font-semibold text-[14px] cursor-pointer">¿Coexistencia significa no desconectar? <span class="float-right">⌄</span></summary><p class="mt-3 text-[13px] leading-6 text-zinc-600">Exacto. Tu número sigue funcionando en la app de WhatsApp del teléfono y a la vez en Cloud API. Ideal para transición.</p></details>
-        <details class="rounded-xl border border-zinc-200 bg-white p-4"><summary class="font-semibold text-[14px] cursor-pointer">¿Dónde se guardan los datos? <span class="float-right">⌄</span></summary><p class="mt-3 text-[13px] leading-6 text-zinc-600">Solo guardamos phone_id, waba_id, calidad, tier, destino encriptado y timestamps. KV (Vercel KV en prod) y encriptación AES-256-GCM. Sin mensajes jamás.</p></details>
-      </div>
-    </div>
-    <div class="rounded-[18px] bg-zinc-900 text-white p-6">
-      <div class="text-[13px] leading-6 text-white/70">Listo para vender<br/><span class="text-white font-bold text-[18px]">White-label total, tu dominio, tu logo, tu pricing. Nosotros invisible.</span></div>
-      <div class="mt-6 grid grid-cols-2 gap-3 text-[12px]">
-        <div class="rounded-xl bg-white/10 p-3"><div class="mono">GET /api/connections</div><div class="text-white/60 mt-1">Lista real desde KV</div></div>
-        <div class="rounded-xl bg-white/10 p-3"><div class="mono">POST /api/exchange</div><div class="text-white/60 mt-1">OLD flow code → token</div></div>
-        <div class="rounded-xl bg-white/10 p-3"><div class="mono">POST /api/webhook</div><div class="text-white/60 mt-1">Message-blind enforced</div></div>
-        <div class="rounded-xl bg-white/10 p-3"><div class="mono">override_callback_uri</div><div class="text-white/60 mt-1">Directo a CRM</div></div>
-      </div>
-      <button onclick="openConnectModal()" class="mt-6 w-full py-3 rounded-full bg-white text-zinc-900 font-bold">Conectar número ahora</button>
-    </div>
-  </section>
-
-  <footer class="mt-10 border-t border-zinc-200/70">
-    <div class="mx-auto max-w-[1220px] px-6 py-8 flex flex-wrap justify-between gap-4 text-[12px] text-zinc-500">
-      <div>© TechProvider White-Label • Message-blind • OLD flow sin config_id • No burned data</div>
-      <div class="flex gap-4"><span>Privacidad</span><span>Términos</span><span>Docs API</span></div>
-    </div>
-  </footer>
-</main>
-
-<section id="view-dashboard" class="hidden min-h-[80vh] bg-[#f8fafb]">
-  <div class="mx-auto max-w-[1220px] px-6 py-10">
-    <div class="flex items-center justify-between">
-      <h2 class="text-[22px] font-extrabold tracking-tight">Tus números</h2>
-      <div class="flex gap-2"><button onclick="loadConnections()" class="px-4 py-2 rounded-full border border-zinc-200 bg-white text-sm font-medium">↻ Actualizar</button><button onclick="openConnectModal()" class="px-4 py-2 rounded-full bg-[#25D366] text-white text-sm font-bold">+ Conectar número</button></div>
-    </div>
-
-    <div id="empty-state" class="mt-10 rounded-[20px] border border-dashed border-zinc-300 bg-white p-12 text-center shadow-card hidden">
-      <div class="mx-auto h-16 w-16 rounded-2xl bg-zinc-900 text-white flex items-center justify-center text-2xl">📭</div>
-      <h3 class="mt-4 text-[18px] font-bold">Aún no tienes números conectados</h3>
-      <p class="mt-2 text-[14px] text-zinc-600 max-w-[40ch] mx-auto">Conecta tu primer número en 2 minutos. Los mensajes irán directo a tu CRM, nosotros nunca los vemos.</p>
-      <button onclick="openConnectModal()" class="mt-6 px-6 py-3 rounded-full bg-zinc-900 text-white font-semibold">Conectar número en 2 min →</button>
-      <div class="mt-8 grid md:grid-cols-3 gap-3 text-left max-w-[720px] mx-auto">
-        <div class="rounded-xl bg-zinc-50 border border-zinc-200 p-4"><div class="text-[11px] font-semibold">PASO 1</div><div class="mt-1 text-[13px]">Pon destino <span class="mono text-[11px]">https://tu-crm.com/webhook</span></div></div>
-        <div class="rounded-xl bg-zinc-50 border border-zinc-200 p-4"><div class="text-[11px] font-semibold">PASO 2</div><div class="mt-1 text-[13px]">Login con Meta (OLD flow, sin config_id)</div></div>
-        <div class="rounded-xl bg-zinc-50 border border-zinc-200 p-4"><div class="text-[11px] font-semibold">PASO 3</div><div class="mt-1 text-[13px]">override_callback_uri directo a tu CRM</div></div>
-      </div>
-    </div>
-
-    <div id="filled-state" class="mt-6 grid md:grid-cols-[320px_1fr] gap-5 hidden">
-      <div class="rounded-[18px] border border-zinc-200 bg-white overflow-hidden shadow-card">
-        <div class="px-4 py-3 border-b border-zinc-100 font-semibold text-[13px] flex items-center justify-between"><span>📊 Tus números</span><span id="count-badge" class="text-[11px] px-2 py-0.5 rounded-full bg-zinc-100">0</span></div>
-        <div id="numbers-list" class="p-2 space-y-2 max-h-[560px] overflow-auto"></div>
-      </div>
-      <div id="detail-panel" class="rounded-[18px] border border-zinc-200 bg-white shadow-card overflow-hidden">
-        <div class="p-6">
-          <div class="text-[13px] text-zinc-500">Selecciona un número</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<div id="connect-modal" class="fixed inset-0 z-[100] hidden">
-  <div class="absolute inset-0 bg-zinc-900/40 backdrop-blur-[6px]" onclick="closeConnectModal()"></div>
-  <div class="relative mx-auto max-w-[560px] mt-[4vh] sm:mt-[8vh] mb-10 rounded-[20px] bg-white shadow-[0_30px_120px_-20px_rgba(0,0,0,.5)] border border-zinc-200 overflow-hidden">
-    <div class="px-6 py-5 border-b border-zinc-100 flex items-center justify-between">
-      <div><div class="font-bold text-[16px]">Conectar número</div><div class="text-[12px] text-zinc-500">OLD flow sin config_id • Message-blind • White-label</div></div>
-      <button onclick="closeConnectModal()" class="h-8 w-8 rounded-full bg-zinc-100 hover:bg-zinc-200 flex items-center justify-center">✕</button>
-    </div>
-
-    <div class="p-6 space-y-5">
-      <div>
-        <label class="text-[12px] font-semibold tracking-wide">Destination webhook URL</label>
-        <input id="dest-url" type="url" value="" placeholder="https://tu-crm.com/webhook" class="mt-1.5 w-full rounded-xl border border-zinc-200 px-4 py-3 text-[14px] mono outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"/>
-        <div class="mt-1.5 text-[11px] text-zinc-500">Tu CRM recibirá directo desde Meta via override_callback_uri. Nosotros nunca vemos mensajes.</div>
-      </div>
-
-      <div>
-        <label class="text-[12px] font-semibold tracking-wide">Verify token</label>
-        <div class="mt-1.5 flex gap-2">
-          <input id="verify-token" type="text" value="" placeholder="mi_token_secreto_random_123" class="flex-1 rounded-xl border border-zinc-200 px-4 py-3 text-[14px] mono outline-none focus:border-zinc-900"/>
-          <button onclick="generateVerifyToken()" class="px-3 py-2 rounded-xl border border-zinc-200 text-[12px] font-semibold hover:bg-zinc-50">Generar random</button>
-        </div>
-        <div class="mt-1.5 text-[11px] text-zinc-500">Lo usaremos para verificar tu webhook + encriptado en KV.</div>
-      </div>
-
-      <label class="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3 cursor-pointer">
-        <input id="coexistence" type="checkbox" checked class="mt-0.5"/>
-        <div><div class="text-[13px] font-semibold text-emerald-900">Coexistencia (recomendado)</div><div class="text-[11px] text-emerald-700 mt-0.5">Número sigue en la app del teléfono + Cloud API. Sin desconectar.</div></div>
-      </label>
-
-      <div class="rounded-xl border border-zinc-200">
-        <details>
-          <summary class="px-4 py-3 text-[13px] font-semibold cursor-pointer flex justify-between"><span>⚠️ Bloqueadores comunes</span><span>⌄</span></summary>
-          <div class="px-4 pb-4 text-[12px] leading-6 text-zinc-600 space-y-2">
-            <div><b>Kiamber Corp / nombre empresa:</b> Usa OLD flow sin config_id (ya configurado). No necesitas verificación de negocio previa. Asegúrate app en modo Live y permisos whatsapp_business_management concedidos.</div>
-            <div><b>Invalid OAuth code:</b> Reintenta login, code expira en minutos. No uses config_id.</div>
-            <div><b>Webhook no verifica:</b> Asegura tu CRM responde GET con <span class="mono">hub.challenge</span> si verify_token coincide. Con override_callback_uri, Meta verifica tu URL, no la nuestra.</div>
-            <div><b>Sin números:</b> Completa onboarding hasta verificar número. Revisa Businesses → WABAs → Phone Numbers en Graph.</div>
-            <div class="mono text-[11px] bg-zinc-50 border border-zinc-200 rounded-lg p-2">OLD flow: FB.login({scope:'whatsapp_business_management,whatsapp_business_messaging,business_management', extras:{featureType:'whatsapp_business_app_onboarding', sessionInfoVersion:'3'}})</div>
-          </div>
-        </details>
+  <!-- ================= NAVBAR ================= -->
+  <header class="sticky top-0 z-40 w-full border-b border-white/[0.08] bg-[#09090b]/80 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto flex h-16 items-center justify-between px-4 sm:px-6">
+      <div class="flex items-center gap-6">
+        <a href="#" class="flex items-center gap-2.5 font-bold tracking-tight text-lg text-white">
+          <span class="h-2.5 w-2.5 rounded-full bg-brand-500 glow-dot"></span>
+          <span>Ranvedix</span>
+          <span class="text-xs py-0.5 px-2 rounded-full border border-brand-500/30 bg-brand-500/10 text-brand-500 font-mono">v20.0</span>
+        </a>
+        <nav class="hidden md:flex items-center gap-6 text-sm text-zinc-400 font-medium">
+          <button onclick="switchView('landing')" class="hover:text-white transition">Producto</button>
+          <a href="#arquitectura" class="hover:text-white transition">Message-Blind</a>
+          <a href="#precios" class="hover:text-white transition">Precios</a>
+          <button onclick="switchView('dashboard')" class="hover:text-white text-zinc-200 flex items-center gap-1.5 transition">
+            <i data-lucide="layout-dashboard" class="w-4 h-4 text-brand-500"></i> Panel de Control
+          </button>
+        </nav>
       </div>
 
       <div class="flex items-center gap-3">
-        <button id="launch-btn" onclick="launchSignup()" class="flex-1 inline-flex justify-center items-center gap-2 px-5 py-3 rounded-full bg-[#1877F2] hover:bg-[#166fe5] text-white font-bold shadow-sm"><span id="launch-spinner" class="hidden">⏳</span> Launch signup con Meta</button>
-        <button onclick="closeConnectModal()" class="px-5 py-3 rounded-full border border-zinc-200 font-medium">Cancelar</button>
+        <button onclick="switchView('dashboard')" class="hidden sm:inline-flex text-xs font-semibold px-3.5 py-2 rounded-lg border border-white/10 hover:bg-white/5 transition">
+          Ver Conexiones
+        </button>
+        <button onclick="openModal()" class="inline-flex items-center gap-2 text-xs font-semibold px-4 py-2 rounded-lg bg-brand-500 hover:bg-brand-600 text-zinc-950 transition shadow-lg shadow-brand-500/10">
+          <i data-lucide="plus" class="w-4 h-4"></i> Conectar WhatsApp
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= VISTA: LANDING PAGE ================= -->
+  <div id="view-landing" class="block">
+    <!-- Hero Section -->
+    <section class="relative pt-20 pb-24 overflow-hidden border-b border-white/[0.06]">
+      <div class="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-20%,rgba(16,185,129,0.15),transparent)]"></div>
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 relative">
+        <div class="grid lg:grid-cols-12 gap-12 items-center">
+          
+          <div class="lg:col-span-7 space-y-6">
+            <div class="inline-flex items-center gap-2 rounded-full border border-brand-500/30 bg-brand-500/10 px-3 py-1 text-xs text-brand-500 font-mono">
+              <span class="w-1.5 h-1.5 rounded-full bg-brand-500"></span>
+              Tech Provider Directo • Flujo Autónomo sin Config_ID
+            </div>
+            
+            <h1 class="text-4xl sm:text-6xl font-extrabold tracking-tight text-white leading-[1.08]">
+              Tus mensajes van directo a tu servidor. <br/>
+              <span class="text-zinc-500">Nosotros nunca los leemos.</span>
+            </h1>
+
+            <p class="text-lg text-zinc-400 max-w-xl leading-relaxed">
+              Router de infraestructura para <b>WhatsApp Business Cloud API</b>. Conecta números propios con el flujo oficial de Meta y reenvía webhooks sin retención intermedia de datos personales.
+            </p>
+
+            <div class="flex flex-wrap gap-4 pt-2">
+              <button onclick="openModal()" class="px-6 py-3 rounded-xl bg-brand-500 hover:bg-brand-600 text-zinc-950 font-semibold text-sm flex items-center gap-2 transition shadow-lg shadow-brand-500/20">
+                Lanzar Onboarding <i data-lucide="arrow-right" class="w-4 h-4"></i>
+              </button>
+              <button onclick="switchView('dashboard')" class="px-6 py-3 rounded-xl border border-white/10 hover:bg-white/5 font-semibold text-sm text-zinc-300 flex items-center gap-2 transition">
+                <i data-lucide="terminal" class="w-4 h-4 text-brand-500"></i> Abrir Consola
+              </button>
+            </div>
+
+            <div class="flex items-center gap-6 pt-4 text-xs text-zinc-500 font-mono">
+              <span class="flex items-center gap-1.5"><i data-lucide="check" class="w-4 h-4 text-brand-500"></i> Zero-Retention</span>
+              <span class="flex items-center gap-1.5"><i data-lucide="check" class="w-4 h-4 text-brand-500"></i> Multi-tenant</span>
+              <span class="flex items-center gap-1.5"><i data-lucide="check" class="w-4 h-4 text-brand-500"></i> AES-256 Vault</span>
+            </div>
+          </div>
+
+          <!-- Code / Interactive Preview Card -->
+          <div class="lg:col-span-5">
+            <div class="glass-card rounded-2xl p-5 shadow-2xl relative">
+              <div class="flex items-center justify-between pb-4 border-b border-white/[0.08] mb-4 text-xs">
+                <div class="flex items-center gap-2 text-zinc-400">
+                  <span class="w-2.5 h-2.5 rounded-full bg-red-500/60 inline-block"></span>
+                  <span class="w-2.5 h-2.5 rounded-full bg-yellow-500/60 inline-block"></span>
+                  <span class="w-2.5 h-2.5 rounded-full bg-green-500/60 inline-block"></span>
+                  <span class="ml-2 font-mono text-zinc-500">routing_manifest.json</span>
+                </div>
+                <span class="font-mono text-brand-500 bg-brand-500/10 px-2 py-0.5 rounded text-[11px]">200 OK</span>
+              </div>
+              <pre class="font-mono text-xs text-zinc-300 leading-relaxed overflow-x-auto"><code class="text-zinc-400">// Override directo hacia tu webhook destino:
+POST https://graph.facebook.com/v20.0/{waba_id}/subscribed_apps
+{
+  <span class="text-zinc-500">"override_callback_uri"</span>: <span class="text-brand-500">"https://your-saas.com/api/wa"</span>,
+  <span class="text-zinc-500">"verify_token"</span>: <span class="text-brand-500">"tkn_aes256_live_..."</span>
+}
+
+<span class="text-zinc-500">// Telemetría de ciclo de vida procesada:</span>
+{
+  <span class="text-zinc-500">"event"</span>: <span class="text-white">"message_delivered"</span>,
+  <span class="text-zinc-500">"latency_ms"</span>: <span class="text-brand-500">14ms</span>,
+  <span class="text-zinc-500">"payload_content"</span>: <span class="text-amber-400">"[MESSAGE_BLIND_DROPPED]"</span>
+}</code></pre>
+              <div class="mt-4 pt-4 border-t border-white/[0.08] flex items-center justify-between text-xs font-mono text-zinc-500">
+                <span>Latencia promedio: ~18ms</span>
+                <span class="text-brand-500 flex items-center gap-1"><i data-lucide="shield-check" class="w-3.5 h-3.5"></i> End-to-End</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- Bento Grid Features -->
+    <section class="py-24 max-w-7xl mx-auto px-4 sm:px-6" id="arquitectura">
+      <div class="text-center max-w-2xl mx-auto mb-16 space-y-3">
+        <h2 class="text-xs uppercase tracking-widest font-mono text-brand-500 font-bold">Pilares de Infraestructura</h2>
+        <p class="text-3xl sm:text-4xl font-extrabold text-white">Construido para desarrolladores que exigen control total.</p>
       </div>
 
-      <div id="exchange-status" class="hidden rounded-xl border p-3 text-[12px]"></div>
+      <div class="grid md:grid-cols-3 gap-6">
+        <div class="glass-card rounded-2xl p-6 space-y-3">
+          <div class="w-10 h-10 rounded-xl bg-brand-500/10 border border-brand-500/20 flex items-center justify-center text-brand-500 mb-4">
+            <i data-lucide="cpu" class="w-5 h-5"></i>
+          </div>
+          <h3 class="text-lg font-bold text-white">Router Override</h3>
+          <p class="text-sm text-zinc-400 leading-relaxed">
+            Inyecta tu propia URL mediante <code class="text-xs font-mono bg-white/5 px-1 py-0.5 rounded text-zinc-300">override_callback_uri</code> para que Meta entregue los paquetes directamente en tu infraestructura.
+          </p>
+        </div>
 
-      <div class="text-[11px] text-zinc-500 leading-5">Al continuar aceptas que guardamos solo <span class="mono">phone_id, waba_id, calidad, tier, destino encriptado</span>. Jamás mensajes. Message-blind enforced.</div>
+        <div class="glass-card rounded-2xl p-6 space-y-3">
+          <div class="w-10 h-10 rounded-xl bg-brand-500/10 border border-brand-500/20 flex items-center justify-center text-brand-500 mb-4">
+            <i data-lucide="eye-off" class="w-5 h-5"></i>
+          </div>
+          <h3 class="text-lg font-bold text-white">Privacidad Message-Blind</h3>
+          <p class="text-sm text-zinc-400 leading-relaxed">
+            El webhook descarta inmediatamente el contenido de los mensajes y archivos adjuntos. Solo monitoriza el ciclo de vida (enviado, recibido, leído, fallido).
+          </p>
+        </div>
+
+        <div class="glass-card rounded-2xl p-6 space-y-3">
+          <div class="w-10 h-10 rounded-xl bg-brand-500/10 border border-brand-500/20 flex items-center justify-center text-brand-500 mb-4">
+            <i data-lucide="shield" class="w-5 h-5"></i>
+          </div>
+          <h3 class="text-lg font-bold text-white">Bóveda Cifrada AES-256</h3>
+          <p class="text-sm text-zinc-400 leading-relaxed">
+            Los tokens de usuario y claves de verificación se encriptan con clave simétrica en reposo antes de almacenarse en KV/Redis. Cero tokens en texto plano.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section class="py-20 border-t border-white/[0.08]" id="precios">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6">
+        <div class="text-center max-w-xl mx-auto mb-14 space-y-2">
+          <h2 class="text-xs font-mono uppercase tracking-widest text-brand-500 font-semibold">Suscripción</h2>
+          <p class="text-3xl font-extrabold text-white">Precios transparentes y predecibles</p>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-8">
+          <!-- Starter -->
+          <div class="glass-card rounded-2xl p-8 flex flex-col justify-between">
+            <div class="space-y-4">
+              <span class="text-xs font-mono text-zinc-400 uppercase tracking-wider">Starter</span>
+              <div class="flex items-baseline gap-1">
+                <span class="text-4xl font-extrabold text-white">$9</span>
+                <span class="text-xs text-zinc-500 font-mono">/mes</span>
+              </div>
+              <p class="text-xs text-zinc-400">Ideal para validar tu app y comenzar en desarrollo.</p>
+              <ul class="space-y-2.5 text-xs text-zinc-300 pt-4 border-t border-white/5">
+                <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-brand-500"></i> Hasta 3 números activos</li>
+                <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-brand-500"></i> Router message-blind</li>
+                <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-brand-500"></i> Logs de ciclo de vida (7 días)</li>
+              </ul>
+            </div>
+            <button onclick="openModal()" class="w-full mt-8 py-2.5 rounded-lg border border-white/10 hover:bg-white/5 text-xs font-semibold text-white transition">Comenzar Starter</button>
+          </div>
+
+          <!-- Growth -->
+          <div class="glass-card rounded-2xl p-8 border-brand-500/40 relative flex flex-col justify-between shadow-xl shadow-brand-500/5">
+            <span class="absolute -top-3 right-6 text-[10px] font-mono uppercase tracking-wider bg-brand-500 text-zinc-950 font-bold px-2 py-0.5 rounded-full">Popular</span>
+            <div class="space-y-4">
+              <span class="text-xs font-mono text-brand-500 uppercase tracking-wider">Growth</span>
+              <div class="flex items-baseline gap-1">
+                <span class="text-4xl font-extrabold text-white">$49</span>
+                <span class="text-xs text-zinc-500 font-mono">/mes</span>
+              </div>
+              <p class="text-xs text-zinc-400">Para plataformas SaaS que escalan volumen comercial.</p>
+              <ul class="space-y-2.5 text-xs text-zinc-300 pt-4 border-t border-white/5">
+                <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-brand-500"></i> Conexiones ilimitadas</li>
+                <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-brand-500"></i> Panel Multi-tenant</li>
+                <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-brand-500"></i> Logs y telemetría por 90 días</li>
+                <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-brand-500"></i> Reintento automático de webhooks</li>
+              </ul>
+            </div>
+            <button onclick="openModal()" class="w-full mt-8 py-2.5 rounded-lg bg-brand-500 hover:bg-brand-600 text-xs font-semibold text-zinc-950 transition">Comenzar Growth</button>
+          </div>
+
+          <!-- Scale -->
+          <div class="glass-card rounded-2xl p-8 flex flex-col justify-between">
+            <div class="space-y-4">
+              <span class="text-xs font-mono text-zinc-400 uppercase tracking-wider">Scale / White-Label</span>
+              <div class="flex items-baseline gap-1">
+                <span class="text-4xl font-extrabold text-white">$149</span>
+                <span class="text-xs text-zinc-500 font-mono">/mes</span>
+              </div>
+              <p class="text-xs text-zinc-400">Para agencias y soluciones de marca blanca integral.</p>
+              <ul class="space-y-2.5 text-xs text-zinc-300 pt-4 border-t border-white/5">
+                <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-brand-500"></i> Todo lo del plan Growth</li>
+                <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-brand-500"></i> Dominio propio y marca blanca</li>
+                <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-brand-500"></i> Soporte de ingeniería prioritario</li>
+              </ul>
+            </div>
+            <button onclick="openModal()" class="w-full mt-8 py-2.5 rounded-lg border border-white/10 hover:bg-white/5 text-xs font-semibold text-white transition">Contactar Ventas</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ================= VISTA: DASHBOARD / PANEL ================= -->
+  <div id="view-dashboard" class="hidden">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+      
+      <!-- Dashboard Header -->
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-white/[0.08]">
+        <div>
+          <div class="flex items-center gap-3">
+            <h1 class="text-2xl font-bold text-white tracking-tight">Panel de Control</h1>
+            <span class="flex items-center gap-1.5 text-[11px] font-mono text-brand-500 bg-brand-500/10 px-2.5 py-0.5 rounded-full border border-brand-500/20">
+              <span class="w-1.5 h-1.5 rounded-full bg-brand-500 animate-pulse"></span> Meta Cloud API Operacional
+            </span>
+          </div>
+          <p class="text-xs text-zinc-400 mt-1">Monitoreo de conexiones WABA, estado de webhooks y logs de entrega.</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <button onclick="fetchConnections()" class="p-2 rounded-lg border border-white/10 hover:bg-white/5 text-zinc-400 hover:text-white transition" title="Refrescar datos">
+            <i data-lucide="refresh-cw" class="w-4 h-4" id="refreshIcon"></i>
+          </button>
+          <button onclick="openModal()" class="inline-flex items-center gap-2 text-xs font-semibold px-4 py-2 rounded-lg bg-brand-500 hover:bg-brand-600 text-zinc-950 transition">
+            <i data-lucide="plus" class="w-4 h-4"></i> Conectar Nuevo Número
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Metrics Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 my-8">
+        <div class="glass-card rounded-xl p-4">
+          <div class="flex items-center justify-between text-xs text-zinc-400 font-mono">
+            <span>NÚMEROS ACTIVOS</span>
+            <i data-lucide="phone" class="w-4 h-4 text-brand-500"></i>
+          </div>
+          <div class="text-2xl font-bold font-mono text-white mt-2" id="statConnectionsCount">-</div>
+          <span class="text-[11px] text-zinc-500">Conexiones WABA mapeadas</span>
+        </div>
+
+        <div class="glass-card rounded-xl p-4">
+          <div class="flex items-center justify-between text-xs text-zinc-400 font-mono">
+            <span>ENRUTAMIENTO</span>
+            <i data-lucide="route" class="w-4 h-4 text-emerald-400"></i>
+          </div>
+          <div class="text-2xl font-bold font-mono text-emerald-400 mt-2">Override</div>
+          <span class="text-[11px] text-zinc-500">Directo al cliente</span>
+        </div>
+
+        <div class="glass-card rounded-xl p-4">
+          <div class="flex items-center justify-between text-xs text-zinc-400 font-mono">
+            <span>RETENCIÓN</span>
+            <i data-lucide="shield-check" class="w-4 h-4 text-brand-500"></i>
+          </div>
+          <div class="text-2xl font-bold font-mono text-white mt-2">0 bytes</div>
+          <span class="text-[11px] text-zinc-500">Message-Blind activo</span>
+        </div>
+
+        <div class="glass-card rounded-xl p-4">
+          <div class="flex items-center justify-between text-xs text-zinc-400 font-mono">
+            <span>API GRAPH</span>
+            <i data-lucide="check-circle" class="w-4 h-4 text-brand-500"></i>
+          </div>
+          <div class="text-2xl font-bold font-mono text-white mt-2">v20.0</div>
+          <span class="text-[11px] text-zinc-500">Self-serve / No config_id</span>
+        </div>
+      </div>
+
+      <!-- Active Connections Table -->
+      <div class="glass-card rounded-2xl overflow-hidden mb-8">
+        <div class="px-6 py-4 border-b border-white/[0.08] flex items-center justify-between">
+          <div>
+            <h3 class="text-sm font-semibold text-white">Líneas de WhatsApp Vinculadas</h3>
+            <p class="text-xs text-zinc-400">Números gestionados por tus tenants con webhook override.</p>
+          </div>
+          <span class="text-xs font-mono text-zinc-400 bg-white/5 px-2.5 py-1 rounded-md" id="connCounter">0 registros</span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-white/[0.02] text-zinc-400 font-mono uppercase tracking-wider border-b border-white/[0.06]">
+              <tr>
+                <th class="px-6 py-3.5">Número / Nombre</th>
+                <th class="px-6 py-3.5">Phone Number ID</th>
+                <th class="px-6 py-3.5">WABA ID</th>
+                <th class="px-6 py-3.5">Destino Webhook</th>
+                <th class="px-6 py-3.5">Estado</th>
+                <th class="px-6 py-3.5 text-right">Acción</th>
+              </tr>
+            </thead>
+            <tbody id="connectionsTableBody" class="divide-y divide-white/[0.06] font-mono text-zinc-300">
+              <tr>
+                <td colspan="6" class="px-6 py-12 text-center text-zinc-500 font-sans">
+                  <div class="flex flex-col items-center justify-center gap-2">
+                    <i data-lucide="inbox" class="w-8 h-8 opacity-40"></i>
+                    <span>Cargando conexiones desde <code class="text-xs font-mono">/api/connections</code>...</span>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Live Logs Console -->
+      <div class="glass-card rounded-2xl overflow-hidden">
+        <div class="px-6 py-4 border-b border-white/[0.08] flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <i data-lucide="activity" class="w-4 h-4 text-brand-500"></i>
+            <h3 class="text-sm font-semibold text-white">Eventos de Ciclo de Vida (Lifecycle Logs)</h3>
+          </div>
+          <span class="text-[11px] font-mono text-zinc-500">Sólo status: sent / delivered / read</span>
+        </div>
+        <div class="p-4 bg-black/40 font-mono text-xs text-zinc-400 h-64 overflow-y-auto space-y-2" id="consoleLogs">
+          <p class="text-zinc-600">// Monitoreo activo. Los eventos entrantes de Meta se listarán aquí...</p>
+        </div>
+      </div>
+
     </div>
   </div>
-</div>
 
-<div id="fb-root"></div>
-<script>
-window.fbAsyncInit = function() {
-  FB.init({
-    appId: '811281598468466',
-    autoLogAppEvents: true,
-    xfbml: true,
-    version: 'v20.0'
-  });
-};
-(function(d, s, id){
-  var js, fjs = d.getElementsByTagName(s)[0];
-  if (d.getElementById(id)) {return;}
-  js = d.createElement(s); js.id = id;
-  js.src = "https://connect.facebook.net/en_US/sdk.js";
-  fjs.parentNode.insertBefore(js, fjs);
-}(document, 'script', 'facebook-jssdk'));
-</script>
+  <!-- ================= MODAL: CONECTAR WHATSAPP (Embedded Signup) ================= -->
+  <div id="modalBackdrop" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="glass-card bg-[#0e1015] w-full max-w-xl rounded-2xl border border-white/10 shadow-2xl overflow-hidden">
+      
+      <div class="px-6 py-4 border-b border-white/10 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <i data-lucide="link-2" class="w-4 h-4 text-brand-500"></i>
+          <h3 class="text-sm font-semibold text-white">Vincular Número de WhatsApp</h3>
+        </div>
+        <button onclick="closeModal()" class="text-zinc-400 hover:text-white p-1 rounded-md hover:bg-white/5 transition">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
 
-<script>
-function navigate(view){
-  document.getElementById('view-inicio').classList.toggle('hidden', view!=='inicio');
-  document.getElementById('view-dashboard').classList.toggle('hidden', view!=='dashboard');
-  document.getElementById('nav-inicio').className = view==='inicio' ? 'px-4 py-2 rounded-full text-sm font-semibold bg-zinc-900 text-white' : 'px-4 py-2 rounded-full text-sm font-medium text-zinc-600 hover:text-zinc-900';
-  document.getElementById('nav-dashboard').className = view==='dashboard' ? 'px-4 py-2 rounded-full text-sm font-semibold bg-zinc-900 text-white' : 'px-4 py-2 rounded-full text-sm font-medium text-zinc-600 hover:text-zinc-900';
-  if(view==='dashboard') loadConnections();
-  window.scrollTo({top:0, behavior:'smooth'});
-  if(view==='dashboard') location.hash='dashboard'; else history.replaceState(null,'','#inicio');
-}
-function openConnectModal(){ document.getElementById('connect-modal').classList.remove('hidden'); }
-function closeConnectModal(){ document.getElementById('connect-modal').classList.add('hidden'); }
-function generateVerifyToken(){
-  const chars='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-';
-  let t=''; for(let i=0;i<32;i++) t+=chars[Math.floor(Math.random()*chars.length)];
-  document.getElementById('verify-token').value=t;
-}
-(function(){ generateVerifyToken(); })();
+      <div class="p-6 space-y-4 text-xs">
+        
+        <div>
+          <label class="block font-medium text-zinc-300 mb-1.5">Destination Webhook URL</label>
+          <input id="destinationUrl" type="url" placeholder="https://tu-servidor.com/webhook/whatsapp" 
+            class="w-full px-3.5 py-2.5 rounded-lg bg-black/50 border border-white/10 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none text-zinc-200 font-mono text-xs"/>
+          <p class="text-[11px] text-zinc-500 mt-1">Meta enviará los eventos directamente a esta URL con override_callback_uri.</p>
+        </div>
 
-async function launchSignup(){
-  const dest = document.getElementById('dest-url').value.trim();
-  const vtoken = document.getElementById('verify-token').value.trim();
-  const coexist = document.getElementById('coexistence').checked;
-  const statusEl = document.getElementById('exchange-status');
-  function setStatus(msg, ok){
-    statusEl.classList.remove('hidden');
-    statusEl.className = ok ? 'rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-[12px] text-emerald-800' : 'rounded-xl border border-red-200 bg-red-50 p-3 text-[12px] text-red-800';
-    statusEl.innerHTML = msg;
-  }
-  if(!dest){ setStatus('⚠️ Pon Destination webhook URL (ej: https://tu-crm.com/webhook)', false); return; }
-  if(!vtoken){ setStatus('⚠️ Pon Verify token o genera uno random', false); return; }
-  try{ new URL(dest); if(!dest.startsWith('https://')) throw new Error(); }catch{ setStatus('⚠️ Destination debe ser URL https válida', false); return; }
+        <div>
+          <label class="block font-medium text-zinc-300 mb-1.5">Verify Token</label>
+          <div class="flex gap-2">
+            <input id="verifyToken" type="text" placeholder="token-secreto-de-verificacion" 
+              class="flex-1 px-3.5 py-2.5 rounded-lg bg-black/50 border border-white/10 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none text-zinc-200 font-mono text-xs"/>
+            <button type="button" onclick="generateRandomToken()" class="px-3 py-2 rounded-lg border border-white/10 hover:bg-white/5 text-zinc-300 font-semibold transition flex items-center gap-1">
+              <i data-lucide="key" class="w-3.5 h-3.5"></i> Generar
+            </button>
+          </div>
+        </div>
 
-  const btn = document.getElementById('launch-btn');
-  const spinner = document.getElementById('launch-spinner');
-  btn.disabled=true; spinner.classList.remove('hidden');
-  setStatus('⏳ Abriendo login con Meta — OLD flow sin config_id...', true);
+        <div class="p-3.5 rounded-lg bg-white/[0.02] border border-white/5 flex items-start gap-3">
+          <input type="checkbox" id="liveCheckbox" class="mt-0.5 rounded border-white/20 bg-black/50 text-brand-500 focus:ring-0"/>
+          <label for="liveCheckbox" class="text-zinc-400 leading-relaxed cursor-pointer select-none">
+            <b>Coexistencia activa:</b> El número está actualmente activo en la app oficial de WhatsApp Business (migración fluida sin desconexión).
+          </label>
+        </div>
 
-  if(typeof FB === 'undefined'){
-    setStatus('❌ SDK de Facebook no cargó. Revisa bloqueador y recarga.', false);
-    btn.disabled=false; spinner.classList.add('hidden'); return;
-  }
+        <!-- Alertas de estado -->
+        <div id="statusAlert" class="hidden p-3 rounded-lg text-xs font-mono"></div>
 
-  FB.login(function(response){
-    try{
-      if(response && response.authResponse && response.authResponse.code){
-        const code = response.authResponse.code;
-        setStatus('✅ Code recibido, intercambiando y descubriendo números...', true);
+        <div class="p-3 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 space-y-1">
+          <div class="flex items-center gap-1.5 text-zinc-300 font-medium">
+            <i data-lucide="info" class="w-3.5 h-3.5 text-brand-500"></i> Modo Self-Serve Oficial
+          </div>
+          <p class="text-[11px] leading-relaxed text-zinc-500">
+            Utiliza el flujo nativo sin config_id. No requiere verificación previa del portafolio comercial en desarrollo.
+          </p>
+        </div>
+
+      </div>
+
+      <div class="px-6 py-4 border-t border-white/10 bg-black/40 flex items-center justify-end gap-3">
+        <button onclick="closeModal()" class="px-4 py-2 rounded-lg border border-white/10 hover:bg-white/5 text-xs text-zinc-400 hover:text-white transition">Cancelar</button>
+        <button id="launchBtn" onclick="launchMetaSignup()" class="px-4 py-2 rounded-lg bg-brand-500 hover:bg-brand-600 text-xs font-semibold text-zinc-950 flex items-center gap-1.5 transition">
+          <i data-lucide="zap" class="w-3.5 h-3.5"></i> Conectar con Meta
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ================= SCRIPTS & MOTOR ORIGINAL ================= -->
+  <script>
+    // Iniciar Lucide Icons
+    lucide.createIcons();
+
+    // Swapper entre Landing y Dashboard
+    function switchView(view) {
+      const landing = document.getElementById('view-landing');
+      const dashboard = document.getElementById('view-dashboard');
+      if (view === 'dashboard') {
+        landing.classList.add('hidden');
+        dashboard.classList.remove('hidden');
+        fetchConnections();
+      } else {
+        dashboard.classList.add('hidden');
+        landing.classList.remove('hidden');
+      }
+      lucide.createIcons();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Modal Handlers
+    function openModal() {
+      document.getElementById('modalBackdrop').classList.remove('hidden');
+      document.getElementById('modalBackdrop').classList.add('flex');
+    }
+    function closeModal() {
+      document.getElementById('modalBackdrop').classList.add('hidden');
+      document.getElementById('modalBackdrop').classList.remove('flex');
+      hideStatus();
+    }
+
+    // Token Generator
+    function generateRandomToken() {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+      let token = '';
+      for (let i = 0; i < 32; i++) token += chars[Math.floor(Math.random() * chars.length)];
+      document.getElementById('verifyToken').value = token;
+    }
+
+    function showStatus(msg, isError) {
+      const box = document.getElementById('statusAlert');
+      box.className = `p-3 rounded-lg text-xs font-mono block ${isError ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'bg-brand-500/10 text-brand-500 border border-brand-500/20'}`;
+      box.textContent = msg;
+    }
+    function hideStatus() {
+      const box = document.getElementById('statusAlert');
+      box.className = 'hidden';
+    }
+
+    // Configuración FB SDK (APP_ID intacto de tu motor)
+    const APP_ID = '811281598468466';
+
+    window.fbAsyncInit = function() {
+      FB.init({
+        appId: APP_ID,
+        autoLogAppEvents: true,
+        xfbml: true,
+        version: 'v20.0'
+      });
+      console.log('FB SDK inicializado con v20.0 (Self-serve sin config_id)');
+    };
+
+    (function(d, s, id){
+      var js, fjs = d.getElementsByTagName(s)[0];
+      if (d.getElementById(id)) return;
+      js = d.createElement(s); js.id = id;
+      js.src = "https://connect.facebook.net/es_LA/sdk.js";
+      fjs.parentNode.insertBefore(js, fjs);
+    }(document, 'script', 'facebook-jssdk'));
+
+    // Lógica Onboarding - Directa a tu backend /api/exchange
+    async function launchMetaSignup() {
+      const dest = document.getElementById('destinationUrl').value.trim();
+      const vtoken = document.getElementById('verifyToken').value.trim();
+      const isLive = document.getElementById('liveCheckbox').checked;
+
+      if (!dest) {
+        showStatus('Debes ingresar tu Destination Webhook URL.', true);
+        return;
+      }
+      try { new URL(dest); } catch {
+        showStatus('La URL de destino no es válida.', true);
+        return;
+      }
+      if (!vtoken) {
+        showStatus('Debes ingresar o generar un Verify Token.', true);
+        return;
+      }
+
+      hideStatus();
+      const btn = document.getElementById('launchBtn');
+      btn.disabled = true;
+      btn.innerHTML = `<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i> Abriendo Meta...`;
+      lucide.createIcons();
+
+      if (typeof FB === 'undefined') {
+        showStatus('El SDK de Meta aún está cargando. Espera 2 segundos y reintenta.', true);
+        btn.disabled = false;
+        btn.innerHTML = `<i data-lucide="zap" class="w-3.5 h-3.5"></i> Conectar con Meta`;
+        lucide.createIcons();
+        return;
+      }
+
+      FB.login(function(response) {
+        btn.disabled = false;
+        btn.innerHTML = `<i data-lucide="zap" class="w-3.5 h-3.5"></i> Conectar con Meta`;
+        lucide.createIcons();
+
+        if (!response || response.status !== 'connected') {
+          showStatus('Acceso cancelado. Debes aceptar los permisos solicitados.', true);
+          return;
+        }
+
+        const code = response.authResponse && response.authResponse.code;
+        if (!code) {
+          showStatus('No se recibió el código de autorización de Meta.', true);
+          return;
+        }
+
+        showStatus('Código recibido. Conectando con tu backend...', false);
+        btn.disabled = true;
+
         fetch('/api/exchange', {
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({code, destination_url: dest, verify_token: vtoken, coexistence: coexist})
-        }).then(async r=>{
-          const j = await r.json().catch(()=>({}));
-          if(!r.ok || !j.ok){
-            setStatus('❌ Error exchange: ' + (j.error || r.statusText) + (j.details ? '<br/><pre class="mono text-[10px] mt-2 whitespace-pre-wrap">' + JSON.stringify(j.details,null,2).slice(0,800) + '</pre>' : ''), false);
-            btn.disabled=false; spinner.classList.add('hidden');
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            code: code,
+            destination_url: dest,
+            verify_token: vtoken,
+            is_live_on_whatsapp: isLive
+          })
+        })
+        .then(async r => {
+          const j = await r.json();
+          btn.disabled = false;
+          if (!r.ok) {
+            showStatus('Error en intercambio: ' + (j.error || 'Desconocido'), true);
             return;
           }
-          setStatus('🎉 ¡Conectado! ' + j.count + ' número(s). Redirigiendo a dashboard...<br/><span class="mono text-[11px]">override_callback_uri = ' + dest + '</span>', true);
-          setTimeout(()=>{ closeConnectModal(); navigate('dashboard'); loadConnections(j.numbers); btn.disabled=false; spinner.classList.add('hidden'); }, 1200);
-        }).catch(err=>{
-          setStatus('❌ Error de red en exchange: ' + err.message, false);
-          btn.disabled=false; spinner.classList.add('hidden');
+          showStatus('¡Conectado exitosamente! WABA: ' + j.waba_id, false);
+          setTimeout(() => {
+            closeModal();
+            switchView('dashboard');
+          }, 1500);
+        })
+        .catch(err => {
+          btn.disabled = false;
+          showStatus('Error de conexión: ' + err.message, true);
         });
-      } else if(response && response.status){
-        setStatus('⚠️ Login completado pero sin code. Estado: ' + response.status + '. Revisa popups.', false);
-        console.log('FB login response without code', response);
-        btn.disabled=false; spinner.classList.add('hidden');
-      } else {
-        setStatus('❌ Login cancelado o bloqueado. Permite popups y reintenta.', false);
-        btn.disabled=false; spinner.classList.add('hidden');
-      }
-    }catch(e){
-      setStatus('❌ Excepción: ' + e.message, false);
-      btn.disabled=false; spinner.classList.add('hidden');
-    }
-  }, {
-    scope: 'whatsapp_business_management,whatsapp_business_messaging,business_management',
-    extras: {
-      featureType: 'whatsapp_business_app_onboarding',
-      sessionInfoVersion: '3'
-    }
-  });
-}
 
-let cacheNumbers = [];
-async function loadConnections(prefetched){
-  const empty = document.getElementById('empty-state');
-  const filled = document.getElementById('filled-state');
-  const list = document.getElementById('numbers-list');
-  const badge = document.getElementById('count-badge');
-  try{
-    let numbers = prefetched;
-    if(!numbers){
-      const r = await fetch('/api/connections');
-      const j = await r.json();
-      numbers = j.numbers || [];
+      }, {
+        scope: 'whatsapp_business_management,whatsapp_business_messaging,business_management',
+        extras: {
+          featureType: 'whatsapp_business_app_onboarding',
+          sessionInfoVersion: 3
+        }
+      });
     }
-    cacheNumbers = numbers;
-    if(!numbers || numbers.length===0){
-      empty.classList.remove('hidden');
-      filled.classList.add('hidden');
-      badge.textContent = '0';
-      document.getElementById('detail-panel').innerHTML = '<div class="p-6 text-[13px] text-zinc-500">No hay números aún</div>';
-      return;
+
+    // Consulta en vivo a /api/connections
+    async function fetchConnections() {
+      const refreshIcon = document.getElementById('refreshIcon');
+      refreshIcon?.classList.add('animate-spin');
+
+      try {
+        const res = await fetch('/api/connections');
+        const data = await res.json();
+        
+        const tbody = document.getElementById('connectionsTableBody');
+        const counter = document.getElementById('connCounter');
+        const statCount = document.getElementById('statConnectionsCount');
+
+        const list = Array.isArray(data) ? data : (data.connections || []);
+        
+        statCount.textContent = list.length;
+        counter.textContent = `${list.length} registros`;
+
+        if (list.length === 0) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="6" class="px-6 py-8 text-center text-zinc-500 font-sans">
+                No hay números vinculados aún. Haz clic en <b>Conectar WhatsApp</b> para vincular el primero.
+              </td>
+            </tr>`;
+        } else {
+          tbody.innerHTML = list.map(item => `
+            <tr class="hover:bg-white/[0.02] transition">
+              <td class="px-6 py-4 font-medium text-white flex items-center gap-2 font-sans">
+                <span class="w-2 h-2 rounded-full bg-brand-500"></span>
+                ${item.display_phone_number || item.phone_number || 'WhatsApp Business'}
+              </td>
+              <td class="px-6 py-4 text-zinc-400">${item.phone_number_id || item.id || '-'}</td>
+              <td class="px-6 py-4 text-zinc-400">${item.waba_id || '-'}</td>
+              <td class="px-6 py-4 text-zinc-500 max-w-xs truncate">${item.destination_url || 'Override Configurado'}</td>
+              <td class="px-6 py-4">
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono bg-brand-500/10 text-brand-500 border border-brand-500/20">
+                  LIVE
+                </span>
+              </td>
+              <td class="px-6 py-4 text-right font-sans">
+                <button onclick="inspectLogs('${item.phone_number_id || item.id}')" class="text-zinc-400 hover:text-white underline text-xs">
+                  Ver Logs
+                </button>
+              </td>
+            </tr>
+          `).join('');
+        }
+      } catch (err) {
+        console.warn('Error cargando /api/connections:', err);
+      } finally {
+        setTimeout(() => refreshIcon?.classList.remove('animate-spin'), 600);
+      }
     }
-    empty.classList.add('hidden');
-    filled.classList.remove('hidden');
-    badge.textContent = numbers.length;
-    list.innerHTML = numbers.map((n,i)=>`
-      <button onclick="showDetail('${n.phone_id}')" id="row-${n.phone_id}" class="w-full text-left p-3 rounded-xl border ${i===0?'border-emerald-200 bg-emerald-50':'border-zinc-200 bg-white hover:bg-zinc-50'} transition">
-        <div class="flex items-center justify-between">
-          <div class="font-semibold text-[13px]">${escapeHtml(n.display_phone_number || n.phone_id.slice(-10))}</div>
-          <span class="text-[10px] px-2 py-0.5 rounded-full ${qualityClass(n.quality_rating || n.quality)}">${n.quality_rating || n.quality || 'GREEN'} • Alta</span>
-        </div>
-        <div class="mt-1 text-[11px] text-zinc-500">Destino: <span class="mono">${escapeHtml(n.destination_host || n.destination || '')}</span></div>
-        <div class="mt-1 text-[11px] text-zinc-500">TIER ${escapeHtml(n.tier || 'STANDARD')} ${n.coexistence?'• Coexistencia':''}</div>
-      </button>
-    `).join('');
-    if(numbers[0]) showDetail(numbers[0].phone_id);
-  }catch(e){
-    console.error(e);
-    empty.classList.remove('hidden');
-    filled.classList.add('hidden');
-  }
-}
-function qualityClass(q){
-  q=(q||'GREEN').toUpperCase();
-  if(q==='GREEN') return 'bg-emerald-100 text-emerald-700';
-  if(q==='YELLOW') return 'bg-amber-100 text-amber-700';
-  if(q==='RED') return 'bg-red-100 text-red-700';
-  return 'bg-zinc-100 text-zinc-600';
-}
-function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
-async function showDetail(phone_id){
-  const n = cacheNumbers.find(x=>x.phone_id===phone_id);
-  if(!n) return;
-  document.querySelectorAll('[id^="row-"]').forEach(el=> el.classList.remove('!border-emerald-300','!bg-emerald-50'));
-  const row = document.getElementById('row-'+phone_id);
-  if(row){ row.classList.add('!border-emerald-300','!bg-emerald-50'); }
-  const panel = document.getElementById('detail-panel');
-  panel.innerHTML = `
-    <div class="p-6">
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <div class="text-[18px] font-bold tracking-tight">${escapeHtml(n.display_phone_number)}</div>
-        <span class="text-[11px] px-3 py-1 rounded-full ${qualityClass(n.quality_rating)} font-semibold">Conectado • ${escapeHtml(n.quality_rating||'GREEN')}</span>
-      </div>
-      <div class="mt-5 grid grid-cols-3 gap-3">
-        <div class="rounded-xl border border-zinc-200 p-3"><div class="text-[11px] text-zinc-500">Calidad</div><div class="mt-1 text-[13px] font-semibold text-emerald-700">${escapeHtml(n.quality_rating||'GREEN')} • Alta</div></div>
-        <div class="rounded-xl border border-zinc-200 p-3"><div class="text-[11px] text-zinc-500">Límite</div><div class="mt-1 text-[13px] font-semibold">${tierToLimit(n.tier)} / día</div></div>
-        <div class="rounded-xl border border-zinc-200 p-3"><div class="text-[11px] text-zinc-500">Destino</div><div class="mt-1 mono text-[12px] truncate" title="${escapeHtml(n.destination)}">${escapeHtml(n.destination_host||n.destination||'—')}</div></div>
-      </div>
-      <div class="mt-4 rounded-xl bg-zinc-900 text-emerald-200 p-3 mono text-[11px]">{"ok":true,"blind":true,"quality":"${escapeHtml(n.quality_rating||'GREEN')}","tier":"${escapeHtml(n.tier||'STANDARD')}","message":"Message-blind enforced"}</div>
-      <div class="mt-3 text-[11px] text-zinc-500">↑ Tus mensajes nunca pasan por nosotros. Van directo a tu CRM por override_callback_uri. Nosotros solo guardamos salud y reportes.</div>
-      <div class="mt-6 flex flex-wrap gap-2">
-        <button onclick="testWebhook('${n.phone_id}')" class="px-4 py-2 rounded-full bg-zinc-900 text-white text-[13px] font-semibold">Probar</button>
-        <button onclick="viewHealth('${n.phone_id}')" class="px-4 py-2 rounded-full border border-zinc-200 bg-white text-[13px] font-medium">Ver salud</button>
-        <button onclick="copyReport('${n.phone_id}')" class="px-4 py-2 rounded-full border border-zinc-200 bg-white text-[13px] font-medium">Copiar reporte</button>
-        <button onclick="disconnectPhone('${n.phone_id}')" class="px-4 py-2 rounded-full border border-red-200 bg-red-50 text-red-700 text-[13px] font-medium">Desconectar</button>
-      </div>
-      <details class="mt-6 rounded-xl border border-zinc-200">
-        <summary class="px-4 py-3 text-[12px] font-semibold cursor-pointer">Avanzado — IDs técnicos (oculto por defecto)</summary>
-        <div class="px-4 pb-4 mono text-[11px] text-zinc-600 space-y-1">
-          <div>phone_id: ${escapeHtml(n.phone_id)}</div>
-          <div>waba_id: ${escapeHtml(n.waba_id||'—')}</div>
-          <div>business_id: ${escapeHtml(n.business_id||'—')}</div>
-          <div>conectado: ${escapeHtml(n.connected_at||'')}</div>
-          <div>coexistencia: ${n.coexistence?'sí':'no'}</div>
-          <div class="mt-2 text-[10px] text-zinc-400">No mostramos verify_token ni destination completo por seguridad. Usa Copiar reporte.</div>
-        </div>
-      </details>
-      <div id="health-box" class="mt-4 hidden rounded-xl border border-zinc-200 bg-zinc-50 p-4 mono text-[11px]"></div>
-    </div>
-  `;
-}
-function tierToLimit(tier){
-  const m = {STANDARD:'1,000', STANDARD_250:'250', STANDARD_1K:'1,000', STANDARD_10K:'10,000', STANDARD_100K:'100,000', PINNACLE:'Ilimitado'};
-  return m[(tier||'STANDARD').toUpperCase()] || '1,000';
-}
-async function testWebhook(phone_id){
-  const n = cacheNumbers.find(x=>x.phone_id===phone_id);
-  if(!n) return;
-  alert('Prueba: POST test a ' + n.destination + ' con {test:true, blind:true}.\\nTu CRM debe responder 200.\\n\\n curl -X POST ' + n.destination + ' -H "Content-Type: application/json" -d \'{"test":true}\'');
-}
-async function viewHealth(phone_id){
-  const box = document.getElementById('health-box');
-  box.classList.remove('hidden'); box.textContent='Cargando salud...';
-  try{
-    const r = await fetch('/api/health?phone_id=' + encodeURIComponent(phone_id));
-    const j = await r.json();
-    box.textContent = JSON.stringify(j, null, 2);
-  }catch(e){ box.textContent='Error: '+ e.message; }
-}
-async function copyReport(phone_id){
-  const n = cacheNumbers.find(x=>x.phone_id===phone_id);
-  if(!n) return;
-  const report = `TechProvider Report — ${new Date().toISOString()}
-Número: ${n.display_phone_number}
-Calidad: ${n.quality_rating} (Alta)
-Tier: ${n.tier}
-Límite: ${tierToLimit(n.tier)}/día
-Destino: ${n.destination_host}
-Coexistencia: ${n.coexistence?'Sí':'No'}
-Blind: true — mensajes no pasan por nosotros
-override_callback_uri: ${n.destination}
-`;
-  try{ await navigator.clipboard.writeText(report); alert('Reporte copiado ✔'); } catch{ 
-    const ta=document.createElement('textarea'); ta.value=report; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); alert('Reporte copiado ✔');
-  }
-}
-async function disconnectPhone(phone_id){
-  if(!confirm('¿Desconectar este número? Se borrará del KV.')) return;
-  try{
-    const r = await fetch('/api/disconnect?phone_id=' + encodeURIComponent(phone_id), {method:'DELETE'});
-    const j = await r.json();
-    if(j.ok){ alert('Desconectado'); loadConnections(); }
-    else alert('Error: ' + j.error);
-  }catch(e){ alert('Error: '+ e.message); }
-}
-window.addEventListener('hashchange', ()=>{ const h=location.hash.replace('#',''); if(h==='dashboard') navigate('dashboard'); if(h===''||h==='inicio') navigate('inicio'); });
-if(location.hash==='#dashboard') navigate('dashboard');
-</script>
+
+    // Consulta de Logs hacia /api/logs?phone_id=
+    async function inspectLogs(phoneId) {
+      const consoleBox = document.getElementById('consoleLogs');
+      consoleBox.innerHTML = `<p class="text-brand-500">// Consultando eventos para phone_id: ${phoneId}...</p>`;
+      try {
+        const res = await fetch(`/api/logs?phone_id=${phoneId}`);
+        const data = await res.json();
+        consoleBox.innerHTML = `<pre class="text-zinc-300 text-xs">${JSON.stringify(data, null, 2)}</pre>`;
+      } catch (err) {
+        consoleBox.innerHTML = `<p class="text-red-400">// Error cargando logs: ${err.message}</p>`;
+      }
+    }
+  </script>
 </body>
 </html>
