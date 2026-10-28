@@ -1,39 +1,17 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "api/**/*.js",
-      "use": "@vercel/node"
-    },
-    {
-      "src": "public/index.html",
-      "use": "@vercel/static"
-    }
+  "outputDirectory": "public",
+  "functions": {"api/**/*.js": {"runtime": "nodejs20.x"}},
+  "rewrites": [
+    {"source": "/api/:path*", "destination": "/api/:path*"},
+    {"source": "/(.*)", "destination": "/index.html"}
   ],
-  "routes": [
-    {
-      "src": "/api/webhook",
-      "dest": "/api/webhook.js"
-    },
-    {
-      "src": "/api/exchange",
-      "dest": "/api/exchange.js"
-    },
-    {
-      "src": "/api/mapping",
-      "dest": "/api/mapping.js"
-    },
-    {
-      "src": "/api/connections",
-      "dest": "/api/connections.js"
-    },
-    {
-      "src": "/api/logs",
-      "dest": "/api/logs.js"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/public/index.html"
-    }
-  ]
+  "headers": [{
+    "source": "/api/(.*)",
+    "headers": [
+      {"key": "Access-Control-Allow-Origin", "value": "*"},
+      {"key": "Access-Control-Allow-Methods", "value": "GET,POST,DELETE,OPTIONS"},
+      {"key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization"}
+    ]
+  }]
 }

@@ -3,441 +3,563 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Ranvedix — Tech Provider Router sin verificacion</title>
-<meta name="description" content="Tus mensajes van a todas partes excepto a traves de nosotros. Message-blind WhatsApp Cloud API router, self-serve OLD flow sin config_id."/>
-<link rel="preconnect" href="https://connect.facebook.net"/>
+<title>TechProvider — Tus mensajes van a todas partes excepto a través de nosotros</title>
+<meta name="description" content="Conectas tu número en 2 minutos. Los mensajes van directo a tu CRM. White-label, message-blind, coexistencia."/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','system-ui'],mono:['JetBrains Mono','monospace']},colors:{brand:{50:'#f0fdf4',100:'#dcfce7',500:'#22c55e',600:'#16a34a',950:'#052e16'}},boxShadow:{soft:'0 20px 80px -20px rgba(0,0,0,.15)',card:'0 8px 30px rgba(0,0,0,.06)'}}}}
+</script>
 <style>
-:root{
-  --bg:#fcfaf8;
-  --fg:#0f0f0f;
-  --muted:#6b7280;
-  --line:#ece6e0;
-  --card:#ffffff;
-  --dark:#0f0f0f;
-  --dark2:#151515;
-  --accent:#111;
-  --pill:#f3efe9;
-}
-*{box-sizing:border-box}
-html,body{margin:0;padding:0;background:var(--bg);color:var(--fg);font-family:Inter,ui-sans-system, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing:antialiased;}
-a{color:inherit;text-decoration:none}
-button{font:inherit}
-.badge{display:inline-flex;align-items:center;gap:.5rem;border:1px solid var(--line);background:var(--card);padding:.35rem .7rem;border-radius:999px;font-size:.78rem;letter-spacing:.02em}
-.nav{position:sticky;top:0;z-index:30;background:rgba(252,250,248,.85);backdrop-filter:saturate(1.2) blur(12px);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:.9rem 1.2rem}
-.nav .links{display:flex;gap:1.5rem;align-items:center;color:var(--muted);font-size:.95rem}
-.nav .logo{font-weight:800;letter-spacing:-.02em;font-size:1.15rem;display:flex;align-items:center;gap:.5rem}
-.nav .logo-dot{width:9px;height:9px;background:#000;border-radius:50%;display:inline-block}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;border-radius:999px;padding:.75rem 1.15rem;border:1px solid var(--fg);background:var(--fg);color:#fff;font-weight:600;cursor:pointer;transition:.15s transform, .15s opacity}
-.btn:hover{transform:translateY(-1px)}
-.btn.outline{background:transparent;color:var(--fg)}
-.btn.ghost{background:var(--card);color:var(--fg);border-color:var(--line)}
-.btn.small{padding:.55rem .9rem;font-size:.9rem}
-.container{max-width:1180px;margin:0 auto;padding:0 1.2rem}
-.hero{display:grid;grid-template-columns:1.1fr .9fr;gap:2.2rem;align-items:center;padding:3.2rem 0 2rem}
-@media(max-width:960px){.hero{grid-template-columns:1fr;padding-top:1.8rem}.nav .links .hide-m{display:none}}
-.h1{font-size:clamp(2.1rem,5vw,3.8rem);line-height:.98;letter-spacing:-.04em;font-weight:900;margin:0}
-.lead{color:var(--muted);font-size:1.08rem;line-height:1.6;margin:1rem 0 0;max-width:52ch}
-.hero-actions{display:flex;gap:.8rem;flex-wrap:wrap;margin-top:1.5rem}
-.trust{display:flex;flex-wrap:wrap;gap:.6rem;margin-top:1.6rem}
-.trust .badge{background:var(--pill)}
-.card-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin:1.2rem 0}
-@media(max-width:960px){.card-grid{grid-template-columns:1fr 1fr}}
-@media(max-width:640px){.card-grid{grid-template-columns:1fr}}
-.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:1.1rem;transition:.15s transform}
-.card:hover{transform:translateY(-2px)}
-.card h3{margin:.25rem 0 .3rem;font-size:1.05rem;letter-spacing:-.01em}
-.card p{margin:0;color:var(--muted);font-size:.93rem;line-height:1.5}
-.kicker{font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700;margin:0 0 .6rem}
-.two-ways{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:2rem 0}
-@media(max-width:800px){.two-ways{grid-template-columns:1fr}}
-.way{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:1.4rem;position:relative;overflow:hidden}
-.way .num{position:absolute;top:1rem;right:1.2rem;font-size:2.8rem;font-weight:900;opacity:.06}
-.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin:1.5rem 0}
-@media(max-width:800px){.steps{grid-template-columns:1fr}}
-.step{border:1px solid var(--line);background:var(--card);border-radius:20px;padding:1.2rem}
-.step .big{font-size:2.2rem;font-weight:900;letter-spacing:-.04em;line-height:1}
-.step .label{font-weight:800;margin-top:.2rem}
-.dark{margin:3rem 0 0;background:var(--dark);color:#f5f5f3;border-radius:28px;padding:2rem 1.2rem;position:relative;overflow:hidden}
-.dark .container{color:#f5f5f3}
-.flow{display:flex;align-items:center;justify-content:center;gap:.7rem;flex-wrap:wrap;margin:1.2rem 0;font-family:ui-monospace, SFMono-Regular, Menlo, monospace;font-size:.95rem}
-.flow .box{background:#1b1b1b;border:1px solid #2a2a2a;border-radius:999px;padding:.5rem .95rem}
-.flow .arrow{opacity:.6}
-.pricing{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin:1.5rem 0}
-@media(max-width:900px){.pricing{grid-template-columns:1fr}}
-.price{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:1.3rem}
-.price.featured{border-color:#000;box-shadow:0 12px 30px rgba(0,0,0,.08)}
-.price .amt{font-size:2.2rem;font-weight:900;letter-spacing:-.04em}
-.price ul{padding-left:1.1rem;color:var(--muted);line-height:1.7;font-size:.92rem}
-.faq{display:grid;grid-template-columns:1fr 1fr;gap:0 2rem}
-@media(max-width:800px){.faq{grid-template-columns:1fr}}
-.faq-item{border-top:1px solid var(--line);padding:1.1rem 0}
-.faq-item b{display:block;margin-bottom:.25rem}
-.footer{border-top:1px solid var(--line);padding:2rem 0 3rem;margin-top:2rem;color:var(--muted);font-size:.9rem}
-.mono{font-family:ui-monospace, SFMono-Regular, Menlo, monospace}
-.modal-backdrop{position:fixed;inset:0;background:rgba(15,15,15,.52);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;z-index:100;padding:1rem}
-.modal-backdrop.open{display:flex}
-.modal{width:min(640px,98vw);background:#fff;border-radius:22px;border:1px solid #e9e9e9;box-shadow:0 20px 80px rgba(0,0,0,.18);overflow:hidden}
-.modal-h{padding:1.1rem 1.2rem;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
-.modal-b{padding:1.15rem 1.2rem;display:grid;gap:.95rem}
-.input{width:100%;border:1px solid var(--line);background:#fbf9f7;border-radius:12px;padding:.78rem .9rem;font-size:.95rem;outline:none}
-.input:focus{border-color:#000;box-shadow:0 0 0 3px rgba(0,0,0,.06)}
-.row{display:flex;gap:.6rem;align-items:center}
-.row .input{flex:1}
-.chk{display:flex;gap:.6rem;align-items:flex-start;font-size:.92rem;line-height:1.45}
-.chk input{margin-top:.2rem}
-.accordion{border:1px solid var(--line);border-radius:12px;overflow:hidden}
-.acc-h{padding:.8rem .9rem;background:#fbf9f7;display:flex;justify-content:space-between;align-items:center;cursor:pointer;font-weight:600;font-size:.93rem}
-.acc-c{padding:.9rem .95rem;display:none;color:var(--muted);font-size:.9rem;line-height:1.55}
-.acc-c.open{display:block}
-.note{font-size:.78rem;color:var(--muted);background:#f7f3ef;border:1px dashed #e6ddd4;border-radius:10px;padding:.55rem .7rem}
-.codeblock{background:#0f0f0f;color:#eaeaea;border-radius:12px;padding:.9rem 1rem;font-family:ui-monospace,Menlo,monospace;font-size:.81rem;overflow:auto}
-.status{font-size:.84rem;padding:.5rem .7rem;border-radius:10px;border:1px solid var(--line);background:var(--pill);display:none}
-.status.show{display:block}
-.status.error{background:#fff1f1;border-color:#ffd1d1}
-.status.ok{background:#effff1;border-color:#c4f0c5}
+*{ -webkit-font-smoothing:antialiased }
+body{ background:#fbfcfe }
+.grid-dot{ background-image: radial-gradient(circle at 1px 1px, rgba(0,0,0,.07) 1px, transparent 0); background-size:24px 24px }
+.glass{ backdrop-filter: blur(18px); background: rgba(255,255,255,.82); border:1px solid rgba(255,255,255,.6) }
+.hero-grad{ background: radial-gradient(1200px 600px at 20% -10%, rgba(244,114,182,.12), transparent), radial-gradient(900px 500px at 80% 0%, rgba(96,165,250,.14), transparent), radial-gradient(800px 400px at 50% 120%, rgba(74,222,128,.10), transparent) }
+.pill{ border:1px solid rgba(0,0,0,.08); background:#fff; box-shadow:0 4px 18px rgba(0,0,0,.05) }
+.feature-icon{ width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px }
+ details > summary{ list-style:none } details > summary::-webkit-details-marker{ display:none }
+ .mono{ font-family: JetBrains Mono, monospace }
+ @keyframes pulseGlow{0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,.4)}50%{box-shadow:0 0 0 12px rgba(34,197,94,0)}}
+ .pulse{ animation:pulseGlow 2.2s infinite }
 </style>
 </head>
-<body>
-<header class="nav">
-  <div class="logo"><span class="logo-dot"></span> Ranvedix</div>
-  <div class="links">
-    <span class="hide-m">Producto</span>
-    <span class="hide-m">Docs</span>
-    <span class="hide-m">Precios</span>
-    <button class="btn small" id="openModalTop">Conectar WhatsApp</button>
+<body class="font-sans text-zinc-900 antialiased">
+
+<header class="sticky top-0 z-40 border-b border-zinc-100/80 glass">
+  <div class="mx-auto max-w-[1220px] px-6 py-3.5 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="h-9 w-9 rounded-xl bg-zinc-900 text-white flex items-center justify-center font-extrabold text-[16px]">T</div>
+      <span class="font-bold tracking-tight text-[18px]">TechProvider</span>
+      <span class="hidden sm:inline-flex ml-2 px-2.5 py-1 rounded-full text-[10px] leading-none tracking-widest font-semibold border border-emerald-200 bg-emerald-50 text-emerald-700">WHITE-LABEL • MESSAGE-BLIND</span>
+    </div>
+    <nav class="flex items-center gap-1">
+      <button onclick="navigate('inicio')" id="nav-inicio" class="px-4 py-2 rounded-full text-sm font-semibold bg-zinc-900 text-white">Inicio</button>
+      <button onclick="navigate('dashboard')" id="nav-dashboard" class="px-4 py-2 rounded-full text-sm font-medium text-zinc-600 hover:text-zinc-900">Dashboard</button>
+      <button onclick="openConnectModal()" class="ml-3 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#25D366] hover:bg-[#20bd5a] text-white text-sm font-bold shadow-sm transition">Conectar número</button>
+    </nav>
   </div>
 </header>
 
-<main class="container">
-  <section class="hero">
+<main id="view-inicio" class="hero-grad">
+  <section class="mx-auto max-w-[1220px] px-6 pt-14 pb-10">
+    <div class="flex flex-wrap items-center gap-2 mb-7">
+      <div class="pill inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-medium">● Meta Official API</div>
+      <div class="pill inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-medium">🔒 Message-Blind</div>
+      <div class="pill inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-medium">📱 Coexistencia</div>
+      <div class="pill inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-medium">⏱ 15 días guardado</div>
+    </div>
+
+    <div class="grid lg:grid-cols-[1.05fr_.95fr] gap-10 items-start">
+      <div>
+        <h1 class="text-[44px] sm:text-[56px] leading-[0.95] tracking-[-0.04em] font-extrabold">
+          Tus mensajes<br/>
+          van a todas partes<br/>
+          <span class="text-zinc-400">excepto a través de</span><br/>
+          nosotros.
+        </h1>
+        <p class="mt-5 text-[18px] leading-7 text-zinc-600 max-w-[46ch]">Conectas tu número en 2 minutos. Los mensajes van <span class="font-semibold text-zinc-900">directo a tu CRM</span> por <span class="mono text-[13px] bg-zinc-900 text-white px-2 py-0.5 rounded">override_callback_uri</span>. Nosotros solo guardamos salud y reportes.</p>
+
+        <div class="mt-8 flex flex-wrap gap-3">
+          <button onclick="openConnectModal()" class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-zinc-900 text-white font-semibold shadow-soft hover:bg-black transition">Conectar número en 2 min →</button>
+          <button onclick="navigate('dashboard')" class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white border border-zinc-200 font-medium hover:bg-zinc-50">Ver dashboard demo</button>
+        </div>
+
+        <div class="mt-8 flex items-center gap-3 text-[11px] tracking-wide text-zinc-500">
+          <span class="inline-flex h-5 w-5 rounded-full bg-emerald-100 text-emerald-600 items-center justify-center">✓</span> Sin mensajes almacenados · Sin intermediarios · White-label total
+        </div>
+
+        <div class="mt-10">
+          <p class="text-[11px] tracking-widest font-semibold text-zinc-400 uppercase mb-3">Confían los equipos que escalan en LatAm</p>
+          <div class="flex flex-wrap gap-2">
+            <div class="pill px-3 py-1.5 rounded-full text-[11px]">Meta Tech Provider</div>
+            <div class="pill px-3 py-1.5 rounded-full text-[11px]">Coexistencia nativa</div>
+            <div class="pill px-3 py-1.5 rounded-full text-[11px]">CRM directo</div>
+            <div class="pill px-3 py-1.5 rounded-full text-[11px]">Calidad GREEN</div>
+            <div class="pill px-3 py-1.5 rounded-full text-[11px]">EU/US Infra</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="relative">
+        <div class="absolute -inset-6 bg-gradient-to-br from-violet-100 via-blue-50 to-emerald-50 rounded-[28px] blur-[18px] opacity-80"></div>
+        <div class="relative rounded-[20px] border border-white shadow-[0_24px_80px_-20px_rgba(0,0,0,.25)] bg-white overflow-hidden">
+          <div class="flex items-center gap-2 px-5 py-3 border-b border-zinc-100 bg-zinc-50/70">
+            <span class="h-2.5 w-2.5 rounded-full bg-zinc-300"></span>
+            <span class="h-2.5 w-2.5 rounded-full bg-zinc-300"></span>
+            <span class="h-2.5 w-2.5 rounded-full bg-zinc-300"></span>
+            <span class="mono text-[11px] text-zinc-500 ml-3">techprovider / conexiones</span>
+            <span class="ml-auto text-[11px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-medium">Live</span>
+          </div>
+          <div class="grid grid-cols-[180px_1fr] min-h-[340px]">
+            <div class="border-r border-zinc-100 p-3 bg-zinc-50/50">
+              <div class="rounded-xl bg-zinc-900 text-white px-3 py-2 text-[12px] font-semibold">📊 Tus números</div>
+              <div class="mt-3 space-y-2">
+                <div class="h-3 rounded bg-zinc-200"></div>
+                <div class="h-3 rounded bg-zinc-200 w-2/3"></div>
+                <div class="mt-4 p-3 rounded-xl border border-emerald-200 bg-emerald-50">
+                  <div class="text-[11px] font-bold text-emerald-800">+XX XXX XXX XXxx • GREEN</div>
+                  <div class="text-[10px] text-emerald-700 mt-1">Calidad alta • TIER 1K</div>
+                </div>
+                <div class="p-3 rounded-xl border border-zinc-200 bg-white">
+                  <div class="text-[11px] text-zinc-500">+XX XXX XXX XXxx</div>
+                  <div class="text-[10px] text-zinc-400 mt-1">Conectado</div>
+                </div>
+              </div>
+            </div>
+            <div class="p-5">
+              <div class="flex items-center justify-between">
+                <div class="font-semibold">+XX XXX XXX XXxx</div>
+                <div class="text-[11px] px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 font-medium">Conectado • GREEN</div>
+              </div>
+              <div class="mt-4 grid grid-cols-3 gap-3">
+                <div class="rounded-xl border border-zinc-200 p-3"><div class="text-[11px] text-zinc-500">Calidad</div><div class="text-[12px] font-semibold text-emerald-700 mt-1">GREEN • Alta</div></div>
+                <div class="rounded-xl border border-zinc-200 p-3"><div class="text-[11px] text-zinc-500">Límite</div><div class="text-[12px] font-semibold mt-1">1,000 / día</div></div>
+                <div class="rounded-xl border border-zinc-200 p-3"><div class="text-[11px] text-zinc-500">Destino</div><div class="mono text-[11px] mt-1 truncate">tu-crm.com/webhook</div></div>
+              </div>
+              <div class="mt-4 rounded-xl bg-zinc-900 text-zinc-200 p-3 mono text-[11px]">{"ok":true,"blind":true,"count":2,"message":"Message-blind enforced"}</div>
+              <div class="mt-3 text-[11px] text-zinc-500 leading-5">↑ Tus mensajes nunca pasan por nosotros. Van directo a tu CRM por override_callback_uri. Nosotros solo guardamos salud y reportes.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="mx-auto max-w-[1220px] px-6 py-16">
+    <div class="grid md:grid-cols-3 gap-4">
+      <div class="rounded-[18px] border border-zinc-200 bg-white p-6 shadow-card">
+        <div class="feature-icon bg-zinc-900 text-white">🔌</div>
+        <h3 class="mt-4 font-bold text-[16px]">Conecta sin desconectar</h3>
+        <p class="mt-2 text-[14px] leading-6 text-zinc-600">Coexistencia nativa. Tu número sigue en la app del teléfono y a la vez en Cloud API. Sin perder historial.</p>
+        <div class="mt-4 inline-flex items-center gap-2 text-[11px] mono px-2 py-1 rounded-full bg-zinc-100">platform_type: CLOUD_API</div>
+      </div>
+      <div class="rounded-[18px] border border-zinc-200 bg-white p-6 shadow-card">
+        <div class="feature-icon bg-emerald-500 text-white">🔒</div>
+        <h3 class="mt-4 font-bold text-[16px]">Mensajes nunca pasan por nosotros</h3>
+        <p class="mt-2 text-[14px] leading-6 text-zinc-600">Message-blind real. El webhook de Meta apunta directo a tu CRM con override_callback_uri. Nosotros solo vemos estados.</p>
+        <div class="mt-4 inline-flex items-center gap-2 text-[11px] mono px-2 py-1 rounded-full bg-emerald-50 text-emerald-700">blind:true</div>
+      </div>
+      <div class="rounded-[18px] border border-zinc-200 bg-white p-6 shadow-card">
+        <div class="feature-icon bg-blue-500 text-white">📈</div>
+        <h3 class="mt-4 font-bold text-[16px]">Calidad en tiempo real</h3>
+        <p class="mt-2 text-[14px] leading-6 text-zinc-600">GREEN / YELLOW / RED, tier, throughput y salud. Alertas antes de caída. Reporte copiable para clientes.</p>
+        <div class="mt-4 inline-flex items-center gap-2 text-[11px] mono px-2 py-1 rounded-full bg-blue-50 text-blue-700">quality_rating: GREEN</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="mx-auto max-w-[1220px] px-6 py-10">
+    <h2 class="text-[28px] font-extrabold tracking-tight">Cómo funciona — 3 pasos, 2 minutos</h2>
+    <div class="mt-8 grid md:grid-cols-3 gap-4">
+      <div class="rounded-[18px] bg-white border border-zinc-200 p-6">
+        <div class="h-8 w-8 rounded-full bg-zinc-900 text-white flex items-center justify-center font-bold text-sm">1</div>
+        <h4 class="mt-4 font-bold">Pon tu destino</h4>
+        <p class="mt-2 text-[14px] leading-6 text-zinc-600">Tu CRM webhook: <span class="mono text-[12px] bg-zinc-100 px-1.5 py-0.5 rounded">https://tu-crm.com/webhook</span> y un verify token random. Nosotros lo encriptamos.</p>
+      </div>
+      <div class="rounded-[18px] bg-white border border-zinc-200 p-6">
+        <div class="h-8 w-8 rounded-full bg-zinc-900 text-white flex items-center justify-center font-bold text-sm">2</div>
+        <h4 class="mt-4 font-bold">Login con Meta</h4>
+        <p class="mt-2 text-[14px] leading-6 text-zinc-600">OLD flow sin config_id. <span class="mono text-[12px] bg-zinc-100 px-1.5 py-0.5 rounded">FB.login</span> con <span class="mono text-[12px]">whatsapp_business_app_onboarding</span>. Evita error Kiamber Corp.</p>
+      </div>
+      <div class="rounded-[18px] bg-white border border-zinc-200 p-6">
+        <div class="h-8 w-8 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-sm">3</div>
+        <h4 class="mt-4 font-bold">Directo a tu CRM</h4>
+        <p class="mt-2 text-[14px] leading-6 text-zinc-600">Hacemos POST a subscribed_apps con override_callback_uri. Desde ahí Meta envía todo directo a ti. Nosotros quedamos fuera del mensaje.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="mx-auto max-w-[1220px] px-6 py-16">
+    <h2 class="text-[28px] font-extrabold tracking-tight">Pricing white-label, listo para revender</h2>
+    <div class="mt-2 text-[14px] text-zinc-600">Cobra a tus clientes lo que quieras. Tu margen, tu marca.</div>
+    <div class="mt-8 grid md:grid-cols-3 gap-4">
+      <div class="rounded-[20px] border border-zinc-200 bg-white p-7">
+        <div class="text-[11px] tracking-widest font-semibold text-zinc-500">STARTER</div>
+        <div class="mt-3 flex items-baseline gap-2"><span class="text-[36px] font-extrabold">$9</span><span class="text-zinc-500">/mes</span></div>
+        <ul class="mt-5 space-y-2 text-[14px] text-zinc-700">
+          <li>• 1 número</li><li>• Message-blind</li><li>• Webhook directo</li><li>• Soporte mail</li>
+        </ul>
+        <button onclick="openConnectModal()" class="mt-6 w-full py-2.5 rounded-full border border-zinc-200 font-semibold hover:bg-zinc-50">Empezar</button>
+      </div>
+      <div class="rounded-[20px] border border-zinc-900 bg-zinc-900 text-white p-7 shadow-soft pulse">
+        <div class="text-[11px] tracking-widest font-semibold text-white/60">GROWTH — POPULAR</div>
+        <div class="mt-3 flex items-baseline gap-2"><span class="text-[36px] font-extrabold">$49</span><span class="text-white/60">/mes</span></div>
+        <ul class="mt-5 space-y-2 text-[14px] text-white/80">
+          <li>• 10 números</li><li>• Coexistencia</li><li>• Salud en tiempo real</li><li>• Reportes white-label</li>
+        </ul>
+        <button onclick="openConnectModal()" class="mt-6 w-full py-2.5 rounded-full bg-[#25D366] text-white font-bold hover:bg-[#20bd5a]">Conectar número</button>
+      </div>
+      <div class="rounded-[20px] border border-zinc-200 bg-white p-7">
+        <div class="text-[11px] tracking-widest font-semibold text-zinc-500">SCALE</div>
+        <div class="mt-3 flex items-baseline gap-2"><span class="text-[36px] font-extrabold">$149</span><span class="text-zinc-500">/mes</span></div>
+        <ul class="mt-5 space-y-2 text-[14px] text-zinc-700">
+          <li>• Ilimitados</li><li>• API completa</li><li>• Múltiples WABAs</li><li>• Soporte prioritario</li>
+        </ul>
+        <button onclick="openConnectModal()" class="mt-6 w-full py-2.5 rounded-full border border-zinc-200 font-semibold hover:bg-zinc-50">Hablar con ventas</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="mx-auto max-w-[1220px] px-6 py-10 grid md:grid-cols-2 gap-10">
     <div>
-      <div class="badge">Tech Provider sin verificacion — OLD flow sin config_id</div>
-      <h1 class="h1">Tus mensajes van a todas partes excepto a traves de nosotros</h1>
-      <p class="lead">
-        <b>Your customers messages go everywhere except through us.</b><br/>
-        Router message-blind para WhatsApp Cloud API. Self-serve con <span class="mono">FB.login</span> sin <span class="mono">config_id</span>, sin WABA prestado, sin datos quemados. Override directo a tu webhook.
-        <br/><span class="mono" style="font-size:.82rem;color:#111;background:#f3efe9;border:1px solid var(--line);padding:.15rem .4rem;border-radius:999px">Funciona sin verificar portafolio en modo desarrollo - flujo self-serve</span>
-      </p>
-      <div class="hero-actions">
-        <button class="btn" id="openModalHero">Launch signup -></button>
-        <a class="btn outline" href="#how">Ver flujo</a>
-        <button class="btn ghost" onclick="document.getElementById('pricing').scrollIntoView({behavior:'smooth'})">$9/mes para empezar</button>
-      </div>
-      <div class="trust">
-        <span class="badge">Meta Tech Provider</span>
-        <span class="badge">Official Cloud API</span>
-        <span class="badge">Message-blind</span>
-        <span class="badge">Per-tenant</span>
-        <span class="badge">Sin config_id</span>
+      <h3 class="text-[20px] font-bold">FAQ</h3>
+      <div class="mt-4 space-y-3">
+        <details class="rounded-xl border border-zinc-200 bg-white p-4 open:shadow-card"><summary class="font-semibold text-[14px] cursor-pointer">¿Los mensajes pasan por ustedes? <span class="float-right">⌄</span></summary><p class="mt-3 text-[13px] leading-6 text-zinc-600">No. Message-blind real: usamos <span class="mono">override_callback_uri</span> y Meta envía directo a tu CRM. Nuestro webhook solo ve statuses y calidad si alguien nos apunta, pero borramos <span class="mono">messages</span>.</p></details>
+        <details class="rounded-xl border border-zinc-200 bg-white p-4"><summary class="font-semibold text-[14px] cursor-pointer">¿Necesito verificación de Meta? <span class="float-right">⌄</span></summary><p class="mt-3 text-[13px] leading-6 text-zinc-600">No para el OLD flow sin config_id. Usamos <span class="mono">FB.login</span> con <span class="mono">whatsapp_business_app_onboarding</span> sessionInfoVersion 3. Funciona sin verificación avanzada y evita Kiamber Corp error.</p></details>
+        <details class="rounded-xl border border-zinc-200 bg-white p-4"><summary class="font-semibold text-[14px] cursor-pointer">¿Coexistencia significa no desconectar? <span class="float-right">⌄</span></summary><p class="mt-3 text-[13px] leading-6 text-zinc-600">Exacto. Tu número sigue funcionando en la app de WhatsApp del teléfono y a la vez en Cloud API. Ideal para transición.</p></details>
+        <details class="rounded-xl border border-zinc-200 bg-white p-4"><summary class="font-semibold text-[14px] cursor-pointer">¿Dónde se guardan los datos? <span class="float-right">⌄</span></summary><p class="mt-3 text-[13px] leading-6 text-zinc-600">Solo guardamos phone_id, waba_id, calidad, tier, destino encriptado y timestamps. KV (Vercel KV en prod) y encriptación AES-256-GCM. Sin mensajes jamás.</p></details>
       </div>
     </div>
-    <div>
-      <div class="card" style="border-radius:24px;padding:1.2rem">
-        <div class="kicker">Live routing preview — message-blind</div>
-        <div class="codeblock" id="previewCode">// OLD flow: no config_id
-FB.login(r => {
-  // r.authResponse.code -> backend
-}, {
-  scope: 'whatsapp_business_management,whatsapp_business_messaging,business_management',
-  extras: {
-    featureType: 'whatsapp_business_app_onboarding',
-    sessionInfoVersion: 3
-  }
-})
-
-// backend
-// GET /oauth/access_token?client_id=APP_ID&client_secret=APP_SECRET&code=CODE
-// GET me/businesses
-// GET {business}/owned_whatsapp_business_accounts
-// GET {waba}/phone_numbers
-// POST {waba}/subscribed_apps {override_callback_uri: destination_url}</div>
-        <div style="display:flex;gap:.6rem;margin-top:.9rem;flex-wrap:wrap">
-          <div class="badge">Drop messages</div>
-          <div class="badge">Keep statuses</div>
-          <div class="badge">No Kiamber Corp error</div>
-        </div>
+    <div class="rounded-[18px] bg-zinc-900 text-white p-6">
+      <div class="text-[13px] leading-6 text-white/70">Listo para vender<br/><span class="text-white font-bold text-[18px]">White-label total, tu dominio, tu logo, tu pricing. Nosotros invisible.</span></div>
+      <div class="mt-6 grid grid-cols-2 gap-3 text-[12px]">
+        <div class="rounded-xl bg-white/10 p-3"><div class="mono">GET /api/connections</div><div class="text-white/60 mt-1">Lista real desde KV</div></div>
+        <div class="rounded-xl bg-white/10 p-3"><div class="mono">POST /api/exchange</div><div class="text-white/60 mt-1">OLD flow code → token</div></div>
+        <div class="rounded-xl bg-white/10 p-3"><div class="mono">POST /api/webhook</div><div class="text-white/60 mt-1">Message-blind enforced</div></div>
+        <div class="rounded-xl bg-white/10 p-3"><div class="mono">override_callback_uri</div><div class="text-white/60 mt-1">Directo a CRM</div></div>
       </div>
-      <div class="card" style="margin-top:.8rem;background:#fbf9f7">
-        <div class="kicker">Que no guardamos</div>
-        <p>Contenido de mensajes, media, contactos. Solo lifecycle: sent / delivered / read / failed.</p>
-      </div>
+      <button onclick="openConnectModal()" class="mt-6 w-full py-3 rounded-full bg-white text-zinc-900 font-bold">Conectar número ahora</button>
     </div>
   </section>
 
-  <section>
-    <div class="kicker">Producto — 6 pilares</div>
-    <div class="card-grid">
-      <div class="card"><h3>Router</h3><p>Override <span class="mono">override_callback_uri</span> directo a tu servidor. Meta envia eventos a tu destino, no a nosotros.</p></div>
-      <div class="card"><h3>Message-Blind</h3><p>Webhook descarta <span class="mono">messages</span>, solo persiste statuses en <span class="mono">lifecycle_events:{phone_id}</span>.</p></div>
-      <div class="card"><h3>No Burned Data</h3><p>Sin URLs quemadas, sin tokens hardcodeados, sin telefonos de prueba. Placeholders vacios, valores en KV cifrado AES-256-GCM.</p></div>
-      <div class="card"><h3>Multi-tenant</h3><p>Un WABA por cliente, <span class="mono">waba_map:{phone_id}</span> aislado, busqueda por business, soporte para agencias SaaS.</p></div>
-      <div class="card"><h3>Logs & Lifecycle</h3><p><span class="mono">/api/logs?phone_id=</span> para auditoria, debugging y billing sin exponer PII.</p></div>
-      <div class="card"><h3>Encrypted Vault</h3><p>User access tokens y verify tokens cifrados con <span class="mono">ENCRYPTION_KEY</span>. Nunca en texto plano en logs.</p></div>
-    </div>
-  </section>
-
-  <section class="two-ways">
-    <div class="way">
-      <div class="num">01</div>
-      <div class="kicker">Para SaaS</div>
-      <h3 style="margin:.2rem 0">Self-serve, sin pasar por revision</h3>
-      <p style="color:var(--muted);line-height:1.6">Tu cliente entra, pone su destino <span class="mono">https://your-app.com/webhook/whatsapp</span>, genera su verify token, da click en Launch. Nosotros intercambiamos code, detectamos su WABA propio, intentamos override, guardamos mapping. Cero intervencion tuya.</p>
-      <div class="codeblock" style="margin-top:.6rem">destination_url = your server
-verify_token  = random per tenant</div>
-    </div>
-    <div class="way" style="background:#0f0f0f;color:#f5f5f3;border-color:#1e1e1e">
-      <div class="num" style="color:#fff">02</div>
-      <div class="kicker" style="color:#aaa">Para agencias</div>
-      <h3 style="margin:.2rem 0">White-label, tu marca</h3>
-      <p style="color:#b7b7b7;line-height:1.6">Instala esta plantilla en tu dominio, tu logo, tu pricing. El flujo OLD evita "Kiamber Corp no puede incorporar clientes" porque no usa system_user. Es el mismo cliente que hace embedded onboarding, no tu Tech Provider incorporando por el.</p>
-      <div class="codeblock" style="background:#1a1a1a;border-color:#2a2a2a">flow: OLD_SELF_SERVE_NO_CONFIG_ID
-no config_id 1889... no system_user</div>
-    </div>
-  </section>
-
-  <section id="how">
-    <div class="kicker">Como funciona — self-serve</div>
-    <div class="steps">
-      <div class="step"><div class="big">01</div><div class="label">Onboard</div><p style="color:var(--muted);line-height:1.5">Cliente hace <span class="mono">FB.login</span> con scope <span class="mono">whatsapp_business_management,whatsapp_business_messaging,business_management</span> y <span class="mono">extras {featureType: 'whatsapp_business_app_onboarding', sessionInfoVersion: 3}</span>. Obtienes <span class="mono">code</span>.</p></div>
-      <div class="step"><div class="big">02</div><div class="label">Route</div><p style="color:var(--muted);line-height:1.5">Backend <span class="mono">/api/exchange</span> cambia code por user token, resuelve business - owned WABA - phone_numbers, luego <span class="mono">POST {waba_id}/subscribed_apps override_callback_uri=destination_url</span> con verify_token del cliente.</p></div>
-      <div class="step"><div class="big">03</div><div class="label">Monitor</div><p style="color:var(--muted);line-height:1.5">Tu webhook propio recibe mensajes directos. Nuestro <span class="mono">/api/webhook</span> es fallback message-blind y guarda solo lifecycle en <span class="mono">lifecycle_events:{phone_id}</span>. Lista conexiones en <span class="mono">/api/connections</span>.</p></div>
-    </div>
-  </section>
-
-  <section class="dark">
-    <div class="container" style="padding:0">
-      <div class="kicker" style="color:#aaa">Privacidad por diseno</div>
-      <h2 style="font-size:clamp(1.6rem,3vw,2.4rem);letter-spacing:-.03em;margin:.2rem 0 0;line-height:1.05">Your customer -> Meta Cloud API -> Your server</h2>
-      <div class="flow">
-        <div class="box">Your customer</div><div class="arrow">-></div>
-        <div class="box">Meta Cloud API</div><div class="arrow">-></div>
-        <div class="box" style="background:#fff;color:#000;border-color:#fff">Your server</div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem">
-        <div class="card" style="background:#151515;border-color:#222;color:#ddd">
-          <b style="color:#fff">Nosotros NO vemos</b>
-          <ul style="color:#aaa;line-height:1.7;margin:.5rem 0 0">
-            <li>Texto de mensajes</li>
-            <li>Imagenes, audios, archivos</li>
-            <li>Numeros de clientes finales</li>
-            <li>Catalogos o plantillas</li>
-          </ul>
-        </div>
-        <div class="card" style="background:#151515;border-color:#222;color:#ddd">
-          <b style="color:#fff">Nosotros SI guardamos (cifrado)</b>
-          <ul style="color:#aaa;line-height:1.7;margin:.5rem 0 0">
-            <li>phone_number_id -> destination_url</li>
-            <li>waba_id, business_id</li>
-            <li>lifecycle: sent, delivered, read, failed</li>
-            <li>errores de suscripcion override</li>
-          </ul>
-        </div>
-      </div>
-      <div style="margin-top:1rem;display:flex;gap:.6rem;flex-wrap:wrap">
-        <span class="badge" style="background:#1e1e1e;border-color:#2a2a2a;color:#ccc">Message-blind</span>
-        <span class="badge" style="background:#1e1e1e;border-color:#2a2a2a;color:#ccc">AES-256-GCM</span>
-        <span class="badge" style="background:#1e1e1e;border-color:#2a2a2a;color:#ccc">Per-tenant verify_token</span>
-      </div>
-    </div>
-  </section>
-
-  <section id="pricing" style="margin-top:2.2rem">
-    <div class="kicker">Pricing — simple</div>
-    <div class="pricing">
-      <div class="price"><div class="kicker">Starter</div><div class="amt">$9</div><div style="color:var(--muted)">/mes + consumo Meta</div><ul><li>Hasta 3 numeros</li><li>Logs lifecycle 7 dias</li><li>Router message-blind</li><li>Soporte comunidad</li></ul><button class="btn outline" style="width:100%;margin-top:.8rem" onclick="document.getElementById('openModalHero').click()">Empezar $9</button></div>
-      <div class="price featured"><div class="kicker">Growth — popular</div><div class="amt">$49</div><div style="color:var(--muted)">/mes + consumo Meta</div><ul><li>Numeros ilimitados</li><li>Logs 90 dias + webhooks retry logs</li><li>Multi-tenant dashboard</li><li>Override callback garantizado</li></ul><button class="btn" style="width:100%;margin-top:.8rem" onclick="document.getElementById('openModalHero').click()">Launch Growth</button></div>
-      <div class="price"><div class="kicker">Scale</div><div class="amt">$149</div><div style="color:var(--muted)">/mes + consumo Meta</div><ul><li>Todo de Growth</li><li>White-label + dominio propio</li><li>Soporte tecnico directo</li><li>SLO + auditoria</li></ul><button class="btn outline" style="width:100%;margin-top:.8rem">Hablar con ventas</button></div>
-    </div>
-  </section>
-
-  <section style="margin-top:1.8rem">
-    <div class="kicker">FAQ — sin rodeos</div>
-    <div class="faq">
-      <div class="faq-item"><b>Por que falla con config_id y dice Kiamber Corp no puede incorporar?</b><span style="color:var(--muted)">Porque ese flow usa system_user y requiere verificacion de Tech Provider. El OLD flow sin config_id es self-serve, el cliente incorpora su propio WABA, no tu empresa incorporando por el.</span></div>
-      <div class="faq-item"><b>Necesito verificacion de portafolio?</b><span style="color:var(--muted)">No para desarrollo. Esta plantilla funciona sin verificar, mostrando nota "Funciona sin verificar portafolio en modo desarrollo - flujo self-serve". Para produccion masiva, eventualmente verifica, pero puedes operar en dev.</span></div>
-      <div class="faq-item"><b>Donde va TOKEN_QUEMADO o URLs quemadas?</b><span style="color:var(--muted)">A ningun lado. Esta version CLEAN no tiene datos quemados. El modal tiene placeholders vacios: destination https://your-app.com/webhook/whatsapp y verify token your-webhook-verify-token.</span></div>
-      <div class="faq-item"><b>Como se hace el FB SDK correcto?</b><span style="color:var(--muted)">window.fbAsyncInit = function() no async, loader (function(d,s,id)...), FB.init {appId: '811281598468466', autoLogAppEvents:true, xfbml:true, version:'v20.0'}. Nunca con async/await en fbAsyncInit.</span></div>
-      <div class="faq-item"><b>Que guarda /api/webhook?</b><span style="color:var(--muted)">Solo lifecycle_events (sent, delivered, read, failed). Si llegan messages, los cuenta y los descarta sin persistir contenido, sin reenviar. Message-blind por diseno.</span></div>
-      <div class="faq-item"><b>Y si subscribed_apps override falla?</b><span style="color:var(--muted)">Guardamos mapping igual. Puedes suscribir manual desde App Dashboard > Webhooks > WABA subscription o reintentar. El token y destino quedan cifrados en KV.</span></div>
-    </div>
-  </section>
-
-  <footer class="footer">
-    <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:1rem">
-      <div><b style="color:#000">Ranvedix</b> — Tech Provider router message-blind. OLD flow sin config_id. Hecho para evitar Kiamber Corp error.</div>
-      <div>APP_ID solo en JS constante, no en texto visible. No burned data. Build final SIN CONFIG_ID SIN VERIFICAR.</div>
+  <footer class="mt-10 border-t border-zinc-200/70">
+    <div class="mx-auto max-w-[1220px] px-6 py-8 flex flex-wrap justify-between gap-4 text-[12px] text-zinc-500">
+      <div>© TechProvider White-Label • Message-blind • OLD flow sin config_id • No burned data</div>
+      <div class="flex gap-4"><span>Privacidad</span><span>Términos</span><span>Docs API</span></div>
     </div>
   </footer>
 </main>
 
-<div class="modal-backdrop" id="modalBackdrop">
-  <div class="modal" role="dialog" aria-modal="true">
-    <div class="modal-h">
-      <b>Conectar WhatsApp — self-serve OLD flow</b>
-      <button class="btn ghost small" id="closeModalBtn">X</button>
+<section id="view-dashboard" class="hidden min-h-[80vh] bg-[#f8fafb]">
+  <div class="mx-auto max-w-[1220px] px-6 py-10">
+    <div class="flex items-center justify-between">
+      <h2 class="text-[22px] font-extrabold tracking-tight">Tus números</h2>
+      <div class="flex gap-2"><button onclick="loadConnections()" class="px-4 py-2 rounded-full border border-zinc-200 bg-white text-sm font-medium">↻ Actualizar</button><button onclick="openConnectModal()" class="px-4 py-2 rounded-full bg-[#25D366] text-white text-sm font-bold">+ Conectar número</button></div>
     </div>
-    <div class="modal-b">
-      <div>
-        <div class="kicker">Destination webhook URL</div>
-        <input class="input" id="destinationUrl" placeholder="https://your-app.com/webhook/whatsapp" value=""/>
-        <div class="note" style="margin-top:.45rem">Tu servidor recibira eventos directo de Meta via override_callback_uri</div>
+
+    <div id="empty-state" class="mt-10 rounded-[20px] border border-dashed border-zinc-300 bg-white p-12 text-center shadow-card hidden">
+      <div class="mx-auto h-16 w-16 rounded-2xl bg-zinc-900 text-white flex items-center justify-center text-2xl">📭</div>
+      <h3 class="mt-4 text-[18px] font-bold">Aún no tienes números conectados</h3>
+      <p class="mt-2 text-[14px] text-zinc-600 max-w-[40ch] mx-auto">Conecta tu primer número en 2 minutos. Los mensajes irán directo a tu CRM, nosotros nunca los vemos.</p>
+      <button onclick="openConnectModal()" class="mt-6 px-6 py-3 rounded-full bg-zinc-900 text-white font-semibold">Conectar número en 2 min →</button>
+      <div class="mt-8 grid md:grid-cols-3 gap-3 text-left max-w-[720px] mx-auto">
+        <div class="rounded-xl bg-zinc-50 border border-zinc-200 p-4"><div class="text-[11px] font-semibold">PASO 1</div><div class="mt-1 text-[13px]">Pon destino <span class="mono text-[11px]">https://tu-crm.com/webhook</span></div></div>
+        <div class="rounded-xl bg-zinc-50 border border-zinc-200 p-4"><div class="text-[11px] font-semibold">PASO 2</div><div class="mt-1 text-[13px]">Login con Meta (OLD flow, sin config_id)</div></div>
+        <div class="rounded-xl bg-zinc-50 border border-zinc-200 p-4"><div class="text-[11px] font-semibold">PASO 3</div><div class="mt-1 text-[13px]">override_callback_uri directo a tu CRM</div></div>
       </div>
-      <div>
-        <div class="kicker">Verify token</div>
-        <div class="row">
-          <input class="input" id="verifyToken" placeholder="your-webhook-verify-token" value=""/>
-          <button class="btn ghost small" id="genTokenBtn" type="button">Generate random</button>
+    </div>
+
+    <div id="filled-state" class="mt-6 grid md:grid-cols-[320px_1fr] gap-5 hidden">
+      <div class="rounded-[18px] border border-zinc-200 bg-white overflow-hidden shadow-card">
+        <div class="px-4 py-3 border-b border-zinc-100 font-semibold text-[13px] flex items-center justify-between"><span>📊 Tus números</span><span id="count-badge" class="text-[11px] px-2 py-0.5 rounded-full bg-zinc-100">0</span></div>
+        <div id="numbers-list" class="p-2 space-y-2 max-h-[560px] overflow-auto"></div>
+      </div>
+      <div id="detail-panel" class="rounded-[18px] border border-zinc-200 bg-white shadow-card overflow-hidden">
+        <div class="p-6">
+          <div class="text-[13px] text-zinc-500">Selecciona un número</div>
         </div>
       </div>
-      <label class="chk"><input type="checkbox" id="liveCheckbox"/> Number is live on WhatsApp Business app — marca si el numero esta activo en la app movil (migracion). Si no, deja desmarcado.</label>
+    </div>
+  </div>
+</section>
 
-      <div class="accordion" id="blockersAcc">
-        <div class="acc-h"><span>Before you start — common blockers</span><span>v</span></div>
-        <div class="acc-c">
-          <ul style="margin:0;padding-left:1.1rem">
-            <li>Debes ser admin del Business Manager que posee el WABA.</li>
-            <li>El numero no debe estar en otro Cloud API provider con override activo.</li>
-            <li>Si el numero esta en App API, migrar primero o desvincular.</li>
-            <li>Si ves "Kiamber Corp no puede incorporar clientes", estas usando config_id flow — usa este OLD flow sin config_id.</li>
-            <li>Este flujo funciona sin verificacion de portafolio en modo desarrollo.</li>
-          </ul>
+<div id="connect-modal" class="fixed inset-0 z-[100] hidden">
+  <div class="absolute inset-0 bg-zinc-900/40 backdrop-blur-[6px]" onclick="closeConnectModal()"></div>
+  <div class="relative mx-auto max-w-[560px] mt-[4vh] sm:mt-[8vh] mb-10 rounded-[20px] bg-white shadow-[0_30px_120px_-20px_rgba(0,0,0,.5)] border border-zinc-200 overflow-hidden">
+    <div class="px-6 py-5 border-b border-zinc-100 flex items-center justify-between">
+      <div><div class="font-bold text-[16px]">Conectar número</div><div class="text-[12px] text-zinc-500">OLD flow sin config_id • Message-blind • White-label</div></div>
+      <button onclick="closeConnectModal()" class="h-8 w-8 rounded-full bg-zinc-100 hover:bg-zinc-200 flex items-center justify-center">✕</button>
+    </div>
+
+    <div class="p-6 space-y-5">
+      <div>
+        <label class="text-[12px] font-semibold tracking-wide">Destination webhook URL</label>
+        <input id="dest-url" type="url" value="" placeholder="https://tu-crm.com/webhook" class="mt-1.5 w-full rounded-xl border border-zinc-200 px-4 py-3 text-[14px] mono outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"/>
+        <div class="mt-1.5 text-[11px] text-zinc-500">Tu CRM recibirá directo desde Meta via override_callback_uri. Nosotros nunca vemos mensajes.</div>
+      </div>
+
+      <div>
+        <label class="text-[12px] font-semibold tracking-wide">Verify token</label>
+        <div class="mt-1.5 flex gap-2">
+          <input id="verify-token" type="text" value="" placeholder="mi_token_secreto_random_123" class="flex-1 rounded-xl border border-zinc-200 px-4 py-3 text-[14px] mono outline-none focus:border-zinc-900"/>
+          <button onclick="generateVerifyToken()" class="px-3 py-2 rounded-xl border border-zinc-200 text-[12px] font-semibold hover:bg-zinc-50">Generar random</button>
         </div>
+        <div class="mt-1.5 text-[11px] text-zinc-500">Lo usaremos para verificar tu webhook + encriptado en KV.</div>
       </div>
 
-      <div class="note">Funciona sin verificar portafolio en modo desarrollo - flujo self-serve, sin config_id, sin system_user</div>
+      <label class="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3 cursor-pointer">
+        <input id="coexistence" type="checkbox" checked class="mt-0.5"/>
+        <div><div class="text-[13px] font-semibold text-emerald-900">Coexistencia (recomendado)</div><div class="text-[11px] text-emerald-700 mt-0.5">Número sigue en la app del teléfono + Cloud API. Sin desconectar.</div></div>
+      </label>
 
-      <div class="status" id="statusBox"></div>
-
-      <div style="display:flex;gap:.6rem;justify-content:flex-end">
-        <button class="btn ghost" id="cancelBtn">Cancel</button>
-        <button class="btn" id="launchBtn">Launch signup</button>
+      <div class="rounded-xl border border-zinc-200">
+        <details>
+          <summary class="px-4 py-3 text-[13px] font-semibold cursor-pointer flex justify-between"><span>⚠️ Bloqueadores comunes</span><span>⌄</span></summary>
+          <div class="px-4 pb-4 text-[12px] leading-6 text-zinc-600 space-y-2">
+            <div><b>Kiamber Corp / nombre empresa:</b> Usa OLD flow sin config_id (ya configurado). No necesitas verificación de negocio previa. Asegúrate app en modo Live y permisos whatsapp_business_management concedidos.</div>
+            <div><b>Invalid OAuth code:</b> Reintenta login, code expira en minutos. No uses config_id.</div>
+            <div><b>Webhook no verifica:</b> Asegura tu CRM responde GET con <span class="mono">hub.challenge</span> si verify_token coincide. Con override_callback_uri, Meta verifica tu URL, no la nuestra.</div>
+            <div><b>Sin números:</b> Completa onboarding hasta verificar número. Revisa Businesses → WABAs → Phone Numbers en Graph.</div>
+            <div class="mono text-[11px] bg-zinc-50 border border-zinc-200 rounded-lg p-2">OLD flow: FB.login({scope:'whatsapp_business_management,whatsapp_business_messaging,business_management', extras:{featureType:'whatsapp_business_app_onboarding', sessionInfoVersion:'3'}})</div>
+          </div>
+        </details>
       </div>
 
-      <div class="codeblock" style="font-size:.76rem;display:none" id="resultBox"></div>
+      <div class="flex items-center gap-3">
+        <button id="launch-btn" onclick="launchSignup()" class="flex-1 inline-flex justify-center items-center gap-2 px-5 py-3 rounded-full bg-[#1877F2] hover:bg-[#166fe5] text-white font-bold shadow-sm"><span id="launch-spinner" class="hidden">⏳</span> Launch signup con Meta</button>
+        <button onclick="closeConnectModal()" class="px-5 py-3 rounded-full border border-zinc-200 font-medium">Cancelar</button>
+      </div>
+
+      <div id="exchange-status" class="hidden rounded-xl border p-3 text-[12px]"></div>
+
+      <div class="text-[11px] text-zinc-500 leading-5">Al continuar aceptas que guardamos solo <span class="mono">phone_id, waba_id, calidad, tier, destino encriptado</span>. Jamás mensajes. Message-blind enforced.</div>
     </div>
   </div>
 </div>
 
+<div id="fb-root"></div>
 <script>
-const $ = s=>document.querySelector(s);
-function openModal(){ document.getElementById('modalBackdrop').classList.add('open'); }
-function closeModal(){ document.getElementById('modalBackdrop').classList.remove('open'); }
-document.getElementById('openModalTop')?.addEventListener('click', openModal);
-document.getElementById('openModalHero')?.addEventListener('click', openModal);
-document.getElementById('closeModalBtn')?.addEventListener('click', closeModal);
-document.getElementById('cancelBtn')?.addEventListener('click', closeModal);
-document.getElementById('modalBackdrop')?.addEventListener('click', (e)=>{ if(e.target.id==='modalBackdrop') closeModal(); });
-document.querySelector('#blockersAcc .acc-h')?.addEventListener('click', ()=>{
-  const c = document.querySelector('#blockersAcc .acc-c');
-  c.classList.toggle('open');
-});
-document.getElementById('genTokenBtn')?.addEventListener('click', ()=>{
-  const chars='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
-  let t=''; for(let i=0;i<32;i++) t+=chars[Math.floor(Math.random()*chars.length)];
-  document.getElementById('verifyToken').value=t;
-});
-function showStatus(msg, type){
-  const box=document.getElementById('statusBox');
-  box.textContent=msg;
-  box.className='status show ' + (type||'');
-  box.style.display='block';
-}
-function hideStatus(){ const box=document.getElementById('statusBox'); box.className='status'; box.style.display='none'; }
-
-// FB SDK - FIXED: window.fbAsyncInit = function() NOT async
-const APP_ID = '811281598468466';
-
 window.fbAsyncInit = function() {
   FB.init({
-    appId: APP_ID,
+    appId: '811281598468466',
     autoLogAppEvents: true,
     xfbml: true,
     version: 'v20.0'
   });
-  console.log('FB SDK initialized OLD flow no config_id');
 };
-
-(function(d,s,id){
+(function(d, s, id){
   var js, fjs = d.getElementsByTagName(s)[0];
-  if (d.getElementById(id)) return;
+  if (d.getElementById(id)) {return;}
   js = d.createElement(s); js.id = id;
   js.src = "https://connect.facebook.net/en_US/sdk.js";
   fjs.parentNode.insertBefore(js, fjs);
-}(document,'script','facebook-jssdk'));
+}(document, 'script', 'facebook-jssdk'));
+</script>
 
-document.getElementById('launchBtn')?.addEventListener('click', async ()=>{
-  const dest = (document.getElementById('destinationUrl')?.value||'').trim();
-  const vtoken = (document.getElementById('verifyToken')?.value||'').trim();
-  const isLive = !!document.getElementById('liveCheckbox')?.checked;
-  if(!dest){
-    showStatus('Pon tu Destination webhook URL (placeholder https://your-app.com/webhook/whatsapp)', 'error');
-    return;
+<script>
+function navigate(view){
+  document.getElementById('view-inicio').classList.toggle('hidden', view!=='inicio');
+  document.getElementById('view-dashboard').classList.toggle('hidden', view!=='dashboard');
+  document.getElementById('nav-inicio').className = view==='inicio' ? 'px-4 py-2 rounded-full text-sm font-semibold bg-zinc-900 text-white' : 'px-4 py-2 rounded-full text-sm font-medium text-zinc-600 hover:text-zinc-900';
+  document.getElementById('nav-dashboard').className = view==='dashboard' ? 'px-4 py-2 rounded-full text-sm font-semibold bg-zinc-900 text-white' : 'px-4 py-2 rounded-full text-sm font-medium text-zinc-600 hover:text-zinc-900';
+  if(view==='dashboard') loadConnections();
+  window.scrollTo({top:0, behavior:'smooth'});
+  if(view==='dashboard') location.hash='dashboard'; else history.replaceState(null,'','#inicio');
+}
+function openConnectModal(){ document.getElementById('connect-modal').classList.remove('hidden'); }
+function closeConnectModal(){ document.getElementById('connect-modal').classList.add('hidden'); }
+function generateVerifyToken(){
+  const chars='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-';
+  let t=''; for(let i=0;i<32;i++) t+=chars[Math.floor(Math.random()*chars.length)];
+  document.getElementById('verify-token').value=t;
+}
+(function(){ generateVerifyToken(); })();
+
+async function launchSignup(){
+  const dest = document.getElementById('dest-url').value.trim();
+  const vtoken = document.getElementById('verify-token').value.trim();
+  const coexist = document.getElementById('coexistence').checked;
+  const statusEl = document.getElementById('exchange-status');
+  function setStatus(msg, ok){
+    statusEl.classList.remove('hidden');
+    statusEl.className = ok ? 'rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-[12px] text-emerald-800' : 'rounded-xl border border-red-200 bg-red-50 p-3 text-[12px] text-red-800';
+    statusEl.innerHTML = msg;
   }
-  try { new URL(dest); } catch {
-    showStatus('Destination URL invalido', 'error');
-    return;
-  }
-  if(!vtoken){
-    showStatus('Pon tu verify token (placeholder your-webhook-verify-token)', 'error');
-    return;
-  }
-  hideStatus();
-  const btn=document.getElementById('launchBtn');
-  btn.disabled=true; btn.textContent='Abriendo Facebook...';
+  if(!dest){ setStatus('⚠️ Pon Destination webhook URL (ej: https://tu-crm.com/webhook)', false); return; }
+  if(!vtoken){ setStatus('⚠️ Pon Verify token o genera uno random', false); return; }
+  try{ new URL(dest); if(!dest.startsWith('https://')) throw new Error(); }catch{ setStatus('⚠️ Destination debe ser URL https válida', false); return; }
+
+  const btn = document.getElementById('launch-btn');
+  const spinner = document.getElementById('launch-spinner');
+  btn.disabled=true; spinner.classList.remove('hidden');
+  setStatus('⏳ Abriendo login con Meta — OLD flow sin config_id...', true);
+
   if(typeof FB === 'undefined'){
-    showStatus('FB SDK aun cargando, espera 2s y reintenta', 'error');
-    btn.disabled=false; btn.textContent='Launch signup';
-    return;
+    setStatus('❌ SDK de Facebook no cargó. Revisa bloqueador y recarga.', false);
+    btn.disabled=false; spinner.classList.add('hidden'); return;
   }
+
   FB.login(function(response){
-    console.log('FB.login response', response);
-    btn.disabled=false; btn.textContent='Launch signup';
-    if(!response || response.status !== 'connected'){
-      showStatus('Login cancelado o no autorizado. Asegurate de aceptar permisos.', 'error');
-      return;
-    }
-    const code = response.authResponse && response.authResponse.code;
-    if(!code){
-      showStatus('No se obtuvo code desde FB.login. Este OLD flow requiere code. Reintenta; extras debe ser featureType whatsapp_business_app_onboarding sessionInfoVersion 3', 'error');
-      return;
-    }
-    showStatus('Code recibido, intercambiando en backend...', 'ok');
-    btn.disabled=true; btn.textContent='Exchanging...';
-    fetch('/api/exchange', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        code: code,
-        destination_url: dest,
-        verify_token: vtoken,
-        is_live_on_whatsapp: isLive
-      })
-    }).then(async r=>{
-      const j = await r.json();
-      btn.disabled=false; btn.textContent='Launch signup';
-      if(!r.ok){
-        showStatus('Error intercambio: ' + (j.error||'unknown') + ' ' + (j.details? JSON.stringify(j.details).slice(0,300):''), 'error');
-        const resultEl=document.getElementById('resultBox');
-        resultEl.style.display='block';
-        resultEl.textContent=JSON.stringify(j,null,2);
-        return;
+    try{
+      if(response && response.authResponse && response.authResponse.code){
+        const code = response.authResponse.code;
+        setStatus('✅ Code recibido, intercambiando y descubriendo números...', true);
+        fetch('/api/exchange', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({code, destination_url: dest, verify_token: vtoken, coexistence: coexist})
+        }).then(async r=>{
+          const j = await r.json().catch(()=>({}));
+          if(!r.ok || !j.ok){
+            setStatus('❌ Error exchange: ' + (j.error || r.statusText) + (j.details ? '<br/><pre class="mono text-[10px] mt-2 whitespace-pre-wrap">' + JSON.stringify(j.details,null,2).slice(0,800) + '</pre>' : ''), false);
+            btn.disabled=false; spinner.classList.add('hidden');
+            return;
+          }
+          setStatus('🎉 ¡Conectado! ' + j.count + ' número(s). Redirigiendo a dashboard...<br/><span class="mono text-[11px]">override_callback_uri = ' + dest + '</span>', true);
+          setTimeout(()=>{ closeConnectModal(); navigate('dashboard'); loadConnections(j.numbers); btn.disabled=false; spinner.classList.add('hidden'); }, 1200);
+        }).catch(err=>{
+          setStatus('❌ Error de red en exchange: ' + err.message, false);
+          btn.disabled=false; spinner.classList.add('hidden');
+        });
+      } else if(response && response.status){
+        setStatus('⚠️ Login completado pero sin code. Estado: ' + response.status + '. Revisa popups.', false);
+        console.log('FB login response without code', response);
+        btn.disabled=false; spinner.classList.add('hidden');
+      } else {
+        setStatus('❌ Login cancelado o bloqueado. Permite popups y reintenta.', false);
+        btn.disabled=false; spinner.classList.add('hidden');
       }
-      showStatus('Conectado! WABA '+j.waba_id+' con '+j.phone_numbers.length+' numeros. Override: '+(j.subscribed_apps_result?'OK':'guardado, verifica manual'), 'ok');
-      const resultEl=document.getElementById('resultBox');
-      resultEl.style.display='block';
-      resultEl.textContent=JSON.stringify(j,null,2);
-    }).catch(err=>{
-      btn.disabled=false; btn.textContent='Launch signup';
-      showStatus('Fetch error '+err.message, 'error');
-    });
+    }catch(e){
+      setStatus('❌ Excepción: ' + e.message, false);
+      btn.disabled=false; spinner.classList.add('hidden');
+    }
   }, {
     scope: 'whatsapp_business_management,whatsapp_business_messaging,business_management',
     extras: {
       featureType: 'whatsapp_business_app_onboarding',
-      sessionInfoVersion: 3
+      sessionInfoVersion: '3'
     }
   });
-});
+}
+
+let cacheNumbers = [];
+async function loadConnections(prefetched){
+  const empty = document.getElementById('empty-state');
+  const filled = document.getElementById('filled-state');
+  const list = document.getElementById('numbers-list');
+  const badge = document.getElementById('count-badge');
+  try{
+    let numbers = prefetched;
+    if(!numbers){
+      const r = await fetch('/api/connections');
+      const j = await r.json();
+      numbers = j.numbers || [];
+    }
+    cacheNumbers = numbers;
+    if(!numbers || numbers.length===0){
+      empty.classList.remove('hidden');
+      filled.classList.add('hidden');
+      badge.textContent = '0';
+      document.getElementById('detail-panel').innerHTML = '<div class="p-6 text-[13px] text-zinc-500">No hay números aún</div>';
+      return;
+    }
+    empty.classList.add('hidden');
+    filled.classList.remove('hidden');
+    badge.textContent = numbers.length;
+    list.innerHTML = numbers.map((n,i)=>`
+      <button onclick="showDetail('${n.phone_id}')" id="row-${n.phone_id}" class="w-full text-left p-3 rounded-xl border ${i===0?'border-emerald-200 bg-emerald-50':'border-zinc-200 bg-white hover:bg-zinc-50'} transition">
+        <div class="flex items-center justify-between">
+          <div class="font-semibold text-[13px]">${escapeHtml(n.display_phone_number || n.phone_id.slice(-10))}</div>
+          <span class="text-[10px] px-2 py-0.5 rounded-full ${qualityClass(n.quality_rating || n.quality)}">${n.quality_rating || n.quality || 'GREEN'} • Alta</span>
+        </div>
+        <div class="mt-1 text-[11px] text-zinc-500">Destino: <span class="mono">${escapeHtml(n.destination_host || n.destination || '')}</span></div>
+        <div class="mt-1 text-[11px] text-zinc-500">TIER ${escapeHtml(n.tier || 'STANDARD')} ${n.coexistence?'• Coexistencia':''}</div>
+      </button>
+    `).join('');
+    if(numbers[0]) showDetail(numbers[0].phone_id);
+  }catch(e){
+    console.error(e);
+    empty.classList.remove('hidden');
+    filled.classList.add('hidden');
+  }
+}
+function qualityClass(q){
+  q=(q||'GREEN').toUpperCase();
+  if(q==='GREEN') return 'bg-emerald-100 text-emerald-700';
+  if(q==='YELLOW') return 'bg-amber-100 text-amber-700';
+  if(q==='RED') return 'bg-red-100 text-red-700';
+  return 'bg-zinc-100 text-zinc-600';
+}
+function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+async function showDetail(phone_id){
+  const n = cacheNumbers.find(x=>x.phone_id===phone_id);
+  if(!n) return;
+  document.querySelectorAll('[id^="row-"]').forEach(el=> el.classList.remove('!border-emerald-300','!bg-emerald-50'));
+  const row = document.getElementById('row-'+phone_id);
+  if(row){ row.classList.add('!border-emerald-300','!bg-emerald-50'); }
+  const panel = document.getElementById('detail-panel');
+  panel.innerHTML = `
+    <div class="p-6">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="text-[18px] font-bold tracking-tight">${escapeHtml(n.display_phone_number)}</div>
+        <span class="text-[11px] px-3 py-1 rounded-full ${qualityClass(n.quality_rating)} font-semibold">Conectado • ${escapeHtml(n.quality_rating||'GREEN')}</span>
+      </div>
+      <div class="mt-5 grid grid-cols-3 gap-3">
+        <div class="rounded-xl border border-zinc-200 p-3"><div class="text-[11px] text-zinc-500">Calidad</div><div class="mt-1 text-[13px] font-semibold text-emerald-700">${escapeHtml(n.quality_rating||'GREEN')} • Alta</div></div>
+        <div class="rounded-xl border border-zinc-200 p-3"><div class="text-[11px] text-zinc-500">Límite</div><div class="mt-1 text-[13px] font-semibold">${tierToLimit(n.tier)} / día</div></div>
+        <div class="rounded-xl border border-zinc-200 p-3"><div class="text-[11px] text-zinc-500">Destino</div><div class="mt-1 mono text-[12px] truncate" title="${escapeHtml(n.destination)}">${escapeHtml(n.destination_host||n.destination||'—')}</div></div>
+      </div>
+      <div class="mt-4 rounded-xl bg-zinc-900 text-emerald-200 p-3 mono text-[11px]">{"ok":true,"blind":true,"quality":"${escapeHtml(n.quality_rating||'GREEN')}","tier":"${escapeHtml(n.tier||'STANDARD')}","message":"Message-blind enforced"}</div>
+      <div class="mt-3 text-[11px] text-zinc-500">↑ Tus mensajes nunca pasan por nosotros. Van directo a tu CRM por override_callback_uri. Nosotros solo guardamos salud y reportes.</div>
+      <div class="mt-6 flex flex-wrap gap-2">
+        <button onclick="testWebhook('${n.phone_id}')" class="px-4 py-2 rounded-full bg-zinc-900 text-white text-[13px] font-semibold">Probar</button>
+        <button onclick="viewHealth('${n.phone_id}')" class="px-4 py-2 rounded-full border border-zinc-200 bg-white text-[13px] font-medium">Ver salud</button>
+        <button onclick="copyReport('${n.phone_id}')" class="px-4 py-2 rounded-full border border-zinc-200 bg-white text-[13px] font-medium">Copiar reporte</button>
+        <button onclick="disconnectPhone('${n.phone_id}')" class="px-4 py-2 rounded-full border border-red-200 bg-red-50 text-red-700 text-[13px] font-medium">Desconectar</button>
+      </div>
+      <details class="mt-6 rounded-xl border border-zinc-200">
+        <summary class="px-4 py-3 text-[12px] font-semibold cursor-pointer">Avanzado — IDs técnicos (oculto por defecto)</summary>
+        <div class="px-4 pb-4 mono text-[11px] text-zinc-600 space-y-1">
+          <div>phone_id: ${escapeHtml(n.phone_id)}</div>
+          <div>waba_id: ${escapeHtml(n.waba_id||'—')}</div>
+          <div>business_id: ${escapeHtml(n.business_id||'—')}</div>
+          <div>conectado: ${escapeHtml(n.connected_at||'')}</div>
+          <div>coexistencia: ${n.coexistence?'sí':'no'}</div>
+          <div class="mt-2 text-[10px] text-zinc-400">No mostramos verify_token ni destination completo por seguridad. Usa Copiar reporte.</div>
+        </div>
+      </details>
+      <div id="health-box" class="mt-4 hidden rounded-xl border border-zinc-200 bg-zinc-50 p-4 mono text-[11px]"></div>
+    </div>
+  `;
+}
+function tierToLimit(tier){
+  const m = {STANDARD:'1,000', STANDARD_250:'250', STANDARD_1K:'1,000', STANDARD_10K:'10,000', STANDARD_100K:'100,000', PINNACLE:'Ilimitado'};
+  return m[(tier||'STANDARD').toUpperCase()] || '1,000';
+}
+async function testWebhook(phone_id){
+  const n = cacheNumbers.find(x=>x.phone_id===phone_id);
+  if(!n) return;
+  alert('Prueba: POST test a ' + n.destination + ' con {test:true, blind:true}.\\nTu CRM debe responder 200.\\n\\n curl -X POST ' + n.destination + ' -H "Content-Type: application/json" -d \'{"test":true}\'');
+}
+async function viewHealth(phone_id){
+  const box = document.getElementById('health-box');
+  box.classList.remove('hidden'); box.textContent='Cargando salud...';
+  try{
+    const r = await fetch('/api/health?phone_id=' + encodeURIComponent(phone_id));
+    const j = await r.json();
+    box.textContent = JSON.stringify(j, null, 2);
+  }catch(e){ box.textContent='Error: '+ e.message; }
+}
+async function copyReport(phone_id){
+  const n = cacheNumbers.find(x=>x.phone_id===phone_id);
+  if(!n) return;
+  const report = `TechProvider Report — ${new Date().toISOString()}
+Número: ${n.display_phone_number}
+Calidad: ${n.quality_rating} (Alta)
+Tier: ${n.tier}
+Límite: ${tierToLimit(n.tier)}/día
+Destino: ${n.destination_host}
+Coexistencia: ${n.coexistence?'Sí':'No'}
+Blind: true — mensajes no pasan por nosotros
+override_callback_uri: ${n.destination}
+`;
+  try{ await navigator.clipboard.writeText(report); alert('Reporte copiado ✔'); } catch{ 
+    const ta=document.createElement('textarea'); ta.value=report; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); alert('Reporte copiado ✔');
+  }
+}
+async function disconnectPhone(phone_id){
+  if(!confirm('¿Desconectar este número? Se borrará del KV.')) return;
+  try{
+    const r = await fetch('/api/disconnect?phone_id=' + encodeURIComponent(phone_id), {method:'DELETE'});
+    const j = await r.json();
+    if(j.ok){ alert('Desconectado'); loadConnections(); }
+    else alert('Error: ' + j.error);
+  }catch(e){ alert('Error: '+ e.message); }
+}
+window.addEventListener('hashchange', ()=>{ const h=location.hash.replace('#',''); if(h==='dashboard') navigate('dashboard'); if(h===''||h==='inicio') navigate('inicio'); });
+if(location.hash==='#dashboard') navigate('dashboard');
 </script>
 </body>
 </html>

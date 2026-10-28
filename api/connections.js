@@ -1,23 +1,55 @@
-import { redisGet, redisKeys, redisSMembers } from '../lib/redis.js';
-import { decryptObject } from '../lib/encrypt.js';
-export default async function handler(req,res){
-  res.setHeader('Access-Control-Allow-Origin','*');
-  res.setHeader('Access-Control-Allow-Methods','GET,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers','Content-Type');
-  if(req.method==='OPTIONS') return res.status(200).end();
-  if(req.method!=='GET') return res.status(405).json({error:'Method not allowed'});
+// GET /api/connections — real list from KV, 0 initially beautiful empty
+const { getStore } = require('./_lib/kv');
+const { decrypt } = require('./_lib/crypto');
+
+module.exports = async (req, res) => {
+  if(req.method === 'OPTIONS'){ res.status(200).end(); return; }
+  if(req.method !== 'GET'){ res.status(405).json({ok:false}); return; }
   try{
-    const members=await redisSMembers('connections');
-    let phoneIds=members||[];
-    if(phoneIds.length===0){ const keys=await redisKeys('mapping:*'); phoneIds=keys.map(k=>k.replace('mapping:','')); }
-    const connections=[];
-    for(const pid of phoneIds.slice(0,100)){
-      const raw=await redisGet(`mapping:${pid}`) || await redisGet(`waba_map:${pid}`);
-      if(!raw){ connections.push({phone_number_id:pid,status:'missing_blob'}); continue; }
-      let obj=null; try{ obj=decryptObject(raw); if(typeof obj==='string') obj=JSON.parse(obj); }catch{ obj=null; }
-      if(obj){ connections.push({ phone_number_id:obj.phone_number_id||pid, waba_id:obj.waba_id, business_id:obj.business_id, display_phone_number:obj.display_phone_number||null, destination_url:obj.destination_url||null, flow:obj.flow||'unknown', created_at:obj.created_at, subscribed:!!obj.subscribe_result }); }
-      else{ connections.push({phone_number_id:pid,raw:true}); }
-    }
-    return res.status(200).json({count:connections.length,connections});
-  }catch(e){ console.error(e); return res.status(500).json({error:e.message}); }
-}
+    const store = await getStore();
+    let items = [];
+    try{
+      items = await store.list('phone:');
+    }catch(e){ items = []; }
+
+    // items is [{key,value}] or if file store same
+    const numbers = (items||[]).map(entry=>{
+      const v = entry.value || entry;
+      // decrypt if needed for display masking
+      let dest = v.destination_url_plain || '';
+      try{
+        if(v.destination_url_enc){
+          dest = decrypt(v.destination_url_enc) || dest;
+        }
+      }catch{}
+      // mask destination for privacy? show host
+      let destHost = dest;
+      try{ const u = new URL(dest); destHost = u.host + u.pathname; }catch{}
+
+      return {
+        phone_id: v.phone_id,
+        waba_id: v.waba_id,
+        business_id: v.business_id,
+        display_phone_number: v.display_phone_number || '',
+        verified_name: v.verified_name || '',
+        quality_rating: v.quality_rating || 'GREEN',
+        tier: v.tier || v.throughput?.level || 'STANDARD',
+        quality: v.quality_rating || 'GREEN',
+        status: v.code_verification_status || 'VERIFIED',
+        destination: dest,
+        destination_host: destHost,
+        coexistence: !!v.coexistence,
+        connected_at: v.connected_at,
+        last_health_check: v.last_health_check
+      };
+    }).filter(x=>x.phone_id);
+
+    // sort newest first
+    numbers.sort((a,b)=> new Date(b.connected_at) - new Date(a.connected_at));
+
+    res.status(200).json({ok:true, count: numbers.length, numbers});
+  }catch(err){
+    console.error('connections error', err);
+    res.status(500).json({ok:false, error: err.message, count:0, numbers:[]});
+  }
+};

@@ -1,82 +1,120 @@
-// Message-blind webhook - drops incoming messages, stores only lifecycle events
-import { redisLPush } from '../lib/redis.js';
-const VERIFY_PRODUCTS=['whatsapp'];
-export default async function handler(req,res){
-  res.setHeader('Access-Control-Allow-Origin','*');
-  res.setHeader('Access-Control-Allow-Methods','GET,POST,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers','Content-Type');
-  if(req.method==='OPTIONS') return res.status(200).end();
-  if(req.method==='GET'){
-    const mode=req.query['hub.mode'];
-    const token=req.query['hub.verify_token'];
-    const challenge=req.query['hub.challenge'];
-    const globalToken=process.env.VERIFY_TOKEN||process.env.WHATSAPP_VERIFY_TOKEN||'';
-    if(mode==='subscribe'){
-      if(globalToken && token===globalToken){ return res.status(200).send(challenge); }
-      if(!globalToken && token && challenge){ console.log('Webhook verified dev fallback'); return res.status(200).send(challenge); }
-      if(req.query['allow_any']==='1'){ return res.status(200).send(challenge); }
-      return res.status(403).send('Verification token mismatch');
+// /api/webhook — message-blind: GET verify, POST drops messages, stores lifecycle only
+const { getStore } = require('./_lib/kv');
+const { decrypt } = require('./_lib/crypto');
+
+module.exports = async (req, res) => {
+  const store = await getStore();
+
+  if(req.method === 'GET'){
+    // Verification: hub.mode=subscribe & hub.verify_token matches any stored token or env
+    const mode = req.query['hub.mode'] || req.query['hub_mode'];
+    const token = req.query['hub.verify_token'] || req.query['hub_verify_token'];
+    const challenge = req.query['hub.challenge'] || req.query['hub_challenge'];
+
+    if(mode === 'subscribe'){
+      // check against stored verify tokens
+      let valid = false;
+      const envToken = process.env.WEBHOOK_VERIFY_TOKEN;
+      if(envToken && token === envToken) valid = true;
+
+      if(!valid){
+        try{
+          const phones = await store.list('phone:');
+          for(const entry of (phones||[])){
+            const v = entry.value;
+            let stored = '';
+            try{
+              stored = v.verify_token_enc ? decrypt(v.verify_token_enc) : (v.verify_token || '');
+            }catch{}
+            if(!stored) stored = v.verify_token || '';
+            if(stored && stored === token){ valid = true; break; }
+          }
+        }catch(e){}
+      }
+
+      // For white-label with override_callback_uri, destination_url handles own verification.
+      // We still allow any token if no phones yet for initial setup test? No, require match unless empty.
+      // If no phones configured, allow valid if token non-empty to help test (but log).
+      if(!valid){
+        try{
+          const phones = await store.list('phone:');
+          if(!phones || phones.length===0){
+            // no phones yet, allow any token for testing initial webhook config in Meta
+            console.log('No phones stored yet, allowing verification for testing');
+            valid = true;
+          }
+        }catch{}
+      }
+
+      if(valid && challenge){
+        res.status(200).send(challenge);
+        return;
+      } else {
+        res.status(403).json({ok:false, error:'verify token mismatch'});
+        return;
+      }
     }
-    return res.status(400).send('Bad Request');
+    res.status(400).json({ok:false, error:'invalid verification request'});
+    return;
   }
-  if(req.method==='POST'){
-    let payload=req.body;
-    if(typeof payload==='string'){ try{ payload=JSON.parse(payload);}catch{ payload={}; } }
+
+  if(req.method === 'POST'){
     try{
-      const entries=payload.entry||[];
-      for(const entry of entries){
-        const wabaId=entry.id;
-        const changes=entry.changes||[];
-        for(const change of changes){
-          const value=change.value; if(!value) continue;
-          if(value.messages && Array.isArray(value.messages)){
-            const phoneId=value.metadata?.phone_number_id;
-            if(phoneId){
-              await redisLPush(`lifecycle_events:${phoneId}`,{
-                type:'message_received_dropped',
-                count:value.messages.length,
-                phone_number_id:phoneId,
-                waba_id:wabaId,
-                timestamp:Math.floor(Date.now()/1000),
-                note:'message content dropped per privacy design'
-              });
+      let body = req.body;
+      if(typeof body === 'string'){
+        body = JSON.parse(body);
+      }
+      // MESSAGE-BLIND enforcement: drop messages field completely
+      if(body && body.entry){
+        for(const entry of body.entry){
+          if(entry.changes){
+            for(const change of entry.changes){
+              if(change.value){
+                if(change.value.messages){
+                  // Drop before any processing / logging
+                  delete change.value.messages;
+                }
+                // also drop contacts that may contain message-related? keep but note
+                // We only keep statuses, errors, quality updates
+                const val = change.value;
+                // store lifecycle event
+                const storeKey = `lifecycle:${Date.now()}:${Math.random().toString(36).slice(2,8)}`;
+                const safeEvent = {
+                  timestamp: new Date().toISOString(),
+                  waba_id: change.value?.metadata?.phone_number_id ? undefined : (entry.id || change.value?.metadata?.display_phone_number),
+                  metadata: val.metadata || {},
+                  statuses: val.statuses || [],
+                  errors: val.errors || [],
+                  event_type: val.statuses ? 'status' : (val.errors ? 'error' : (val.display_phone_number ? 'quality' : 'other')),
+                  // message-blind proof
+                  blind: true,
+                  count: 1
+                };
+                // include quality info if present
+                if(val.display_phone_number || val.event || val.quality_rating){
+                  safeEvent.quality = val;
+                }
+                try{
+                  await store.set(storeKey, safeEvent);
+                  if(store.addToIndex) await store.addToIndex('lifecycle:', storeKey);
+                }catch(e){}
+              }
             }
-          }
-          if(value.statuses && Array.isArray(value.statuses)){
-            for(const status of value.statuses){
-              const event={
-                type:'lifecycle',
-                event:status.status,
-                message_id:status.id,
-                recipient_id:status.recipient_id,
-                phone_number_id:value.metadata?.phone_number_id||status.phone_number_id||null,
-                waba_id:wabaId,
-                timestamp:status.timestamp?Number(status.timestamp):Math.floor(Date.now()/1000),
-                pricing:status.pricing||null,
-                errors:status.errors||null,
-                created_at:new Date().toISOString()
-              };
-              const pid=event.phone_number_id||wabaId||'global';
-              await redisLPush(`lifecycle_events:${pid}`,event);
-              await redisLPush(`logs:${wabaId}`,event);
-            }
-          }
-          if(value.event && !value.messages){
-            const pid=value.metadata?.phone_number_id||wabaId||'global';
-            await redisLPush(`lifecycle_events:${pid}`,{
-              type:'waba_event', event:value.event, waba_id:wabaId, phone_number_id:pid, value:value, created_at:new Date().toISOString()
-            });
-          }
-          if(value.message_template_status_update||value.phone_number_name_update||value.account_update){
-            const pid=value.metadata?.phone_number_id||wabaId||'global';
-            await redisLPush(`lifecycle_events:${pid}`,{
-              type:'account_lifecycle', waba_id:wabaId, phone_number_id:pid, value:value, created_at:new Date().toISOString()
-            });
           }
         }
       }
-    }catch(err){ console.error('Webhook processing error',err); }
-    return res.status(200).send('EVENT_RECEIVED');
+
+      // Always return ok, blind enforced
+      res.status(200).json({ok:true, blind:true, message:'Message-blind enforced — lifecycle stored only'});
+      return;
+    }catch(err){
+      console.error('webhook POST error', err);
+      // still return 200 to avoid Meta retries
+      res.status(200).json({ok:true, blind:true, error_logged: true});
+      return;
+    }
   }
-  return res.status(405).send('Method Not Allowed');
-}
+
+  if(req.method === 'OPTIONS'){ res.status(200).end(); return; }
+  res.status(405).json({ok:false});
+};
