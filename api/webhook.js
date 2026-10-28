@@ -1,120 +1,136 @@
-// /api/webhook — message-blind: GET verify, POST drops messages, stores lifecycle only
-const { getStore } = require('./_lib/kv');
-const { decrypt } = require('./_lib/crypto');
+// api/webhook.js - Message-blind forwarding, no message storage
+const redis = require('../lib/redis');
 
 module.exports = async (req, res) => {
-  const store = await getStore();
+  // GET verification
+  if (req.method === 'GET') {
+    const mode = req.query['hub.mode'];
+    const token = req.query['hub.verify_token'];
+    const challenge = req.query['hub.challenge'];
 
-  if(req.method === 'GET'){
-    // Verification: hub.mode=subscribe & hub.verify_token matches any stored token or env
-    const mode = req.query['hub.mode'] || req.query['hub_mode'];
-    const token = req.query['hub.verify_token'] || req.query['hub_verify_token'];
-    const challenge = req.query['hub.challenge'] || req.query['hub_challenge'];
+    if (mode !== 'subscribe') return res.status(400).send('Invalid mode');
 
-    if(mode === 'subscribe'){
-      // check against stored verify tokens
-      let valid = false;
-      const envToken = process.env.WEBHOOK_VERIFY_TOKEN;
-      if(envToken && token === envToken) valid = true;
+    const envToken = process.env.VERIFY_TOKEN;
 
-      if(!valid){
-        try{
-          const phones = await store.list('phone:');
-          for(const entry of (phones||[])){
-            const v = entry.value;
-            let stored = '';
-            try{
-              stored = v.verify_token_enc ? decrypt(v.verify_token_enc) : (v.verify_token || '');
-            }catch{}
-            if(!stored) stored = v.verify_token || '';
-            if(stored && stored === token){ valid = true; break; }
-          }
-        }catch(e){}
-      }
-
-      // For white-label with override_callback_uri, destination_url handles own verification.
-      // We still allow any token if no phones yet for initial setup test? No, require match unless empty.
-      // If no phones configured, allow valid if token non-empty to help test (but log).
-      if(!valid){
-        try{
-          const phones = await store.list('phone:');
-          if(!phones || phones.length===0){
-            // no phones yet, allow any token for testing initial webhook config in Meta
-            console.log('No phones stored yet, allowing verification for testing');
-            valid = true;
-          }
-        }catch{}
-      }
-
-      if(valid && challenge){
-        res.status(200).send(challenge);
-        return;
-      } else {
-        res.status(403).json({ok:false, error:'verify token mismatch'});
-        return;
-      }
+    // Check env token or any stored per-connection token
+    let isValid = false;
+    if (envToken && token === envToken) isValid = true;
+    if (!isValid && token) {
+      try {
+        const connId = await redis.getConnectionIdByVerifyToken(token);
+        if (connId) isValid = true;
+        else {
+          // also scan all connections (fallback, scalable for few connections)
+          const all = await redis.listConnections();
+          if (all.some(c => c.verify_token === token)) { isValid = true; }
+        }
+      } catch (e) { console.warn('verify lookup err', e.message); }
     }
-    res.status(400).json({ok:false, error:'invalid verification request'});
-    return;
+
+    if (isValid) {
+      console.log('Webhook verified', { tokenPreview: token?.slice(0,4)+'***' });
+      return res.status(200).send(challenge);
+    } else {
+      console.warn('Webhook verification failed', { tokenPreview: token?.slice(0,6) });
+      return res.status(403).send('Verification failed');
+    }
   }
 
-  if(req.method === 'POST'){
-    try{
-      let body = req.body;
-      if(typeof body === 'string'){
-        body = JSON.parse(body);
-      }
-      // MESSAGE-BLIND enforcement: drop messages field completely
-      if(body && body.entry){
-        for(const entry of body.entry){
-          if(entry.changes){
-            for(const change of entry.changes){
-              if(change.value){
-                if(change.value.messages){
-                  // Drop before any processing / logging
-                  delete change.value.messages;
-                }
-                // also drop contacts that may contain message-related? keep but note
-                // We only keep statuses, errors, quality updates
-                const val = change.value;
-                // store lifecycle event
-                const storeKey = `lifecycle:${Date.now()}:${Math.random().toString(36).slice(2,8)}`;
-                const safeEvent = {
-                  timestamp: new Date().toISOString(),
-                  waba_id: change.value?.metadata?.phone_number_id ? undefined : (entry.id || change.value?.metadata?.display_phone_number),
-                  metadata: val.metadata || {},
-                  statuses: val.statuses || [],
-                  errors: val.errors || [],
-                  event_type: val.statuses ? 'status' : (val.errors ? 'error' : (val.display_phone_number ? 'quality' : 'other')),
-                  // message-blind proof
-                  blind: true,
-                  count: 1
-                };
-                // include quality info if present
-                if(val.display_phone_number || val.event || val.quality_rating){
-                  safeEvent.quality = val;
-                }
-                try{
-                  await store.set(storeKey, safeEvent);
-                  if(store.addToIndex) await store.addToIndex('lifecycle:', storeKey);
-                }catch(e){}
-              }
-            }
-          }
+  // POST forwarding - message-blind
+  if (req.method === 'POST') {
+    try {
+      const payload = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
+      // Extract identifiers without storing content
+      const entry = payload?.entry?.[0];
+      const wabaId = entry?.id || payload?.entry?.[0]?.id || null;
+      const changes = entry?.changes?.[0];
+      const value = changes?.value;
+      const metadata = value?.metadata;
+      const phoneNumberId = metadata?.phone_number_id || null;
+      const displayPhone = metadata?.display_phone_number || null;
+
+      // Determine event type for logging only (no content)
+      let eventType = 'unknown';
+      if (value?.messages) eventType = 'message';
+      else if (value?.statuses) eventType = 'status';
+      else if (value?.errors) eventType = 'error';
+      else if (payload?.object === 'whatsapp_business_account' && value?.account_update) eventType = 'account_update';
+      else if (value?.history) eventType = 'history';
+      else if (changes?.field === 'smb_app_state_sync') eventType = 'smb_app_state_sync';
+      else if (changes?.field === 'smb_message_echoes') eventType = 'smb_message_echoes';
+
+      console.log('Webhook POST received', {
+        wabaId,
+        phoneNumberId,
+        eventType,
+        entryCount: payload?.entry?.length || 0,
+        hasMessages: !!value?.messages,
+        hasStatuses: !!value?.statuses
+      });
+
+      // Find destination
+      let connection = null;
+      if (wabaId || phoneNumberId) {
+        connection = await redis.findConnectionByWabaOrPhone(wabaId, phoneNumberId);
+        // Fallback: try display phone normalization
+        if (!connection && displayPhone) {
+          const norm = displayPhone.replace(/[^0-9]/g,'');
+          const cid = await redis.get(`phone_display:${norm}`);
+          if (cid) connection = await redis.getConnection(cid);
         }
       }
 
-      // Always return ok, blind enforced
-      res.status(200).json({ok:true, blind:true, message:'Message-blind enforced — lifecycle stored only'});
-      return;
-    }catch(err){
-      console.error('webhook POST error', err);
-      // still return 200 to avoid Meta retries
-      res.status(200).json({ok:true, blind:true, error_logged: true});
-      return;
+      // If not found via mapping, try to find any connection if single-tenant setup (env fallback)
+      if (!connection) {
+        const all = await redis.listConnections();
+        if (all.length === 1) connection = all[0];
+        // If multiple, cannot blind forward without mapping -> log and return 200 to avoid retries
+        else if (all.length === 0) {
+          console.warn('No connections stored, cannot forward - returning 200 to prevent retry storm');
+          return res.status(200).json({ ok: true, blind: true, forwarded: false, reason: 'no_connections' });
+        }
+      }
+
+      if (!connection || !connection.destination_url) {
+        console.warn('Connection not found for forwarding', { wabaId, phoneNumberId });
+        return res.status(200).json({ ok: true, blind: true, forwarded: false, reason: 'connection_not_found' });
+      }
+
+      // Message-blind forwarding - forward raw payload as-is
+      const dest = connection.destination_url;
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 8000);
+
+      try {
+        const forwardRes = await fetch(dest, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-TechProvider-Blind': 'true',
+            'X-WABA-ID': wabaId || connection.waba_id || '',
+            'X-Phone-ID': phoneNumberId || '',
+            'X-Event-Type': eventType,
+            'X-Connection-ID': connection.id
+          },
+          body: JSON.stringify(payload),
+          signal: controller.signal
+        });
+        clearTimeout(timeout);
+        const text = await forwardRes.text().catch(() => '');
+        console.log('Forwarded to destination', { dest: dest.slice(0,40)+'...', status: forwardRes.status, eventType });
+        return res.status(200).json({ ok: true, blind: true, count: 1, forwarded: forwardRes.ok, destStatus: forwardRes.status });
+      } catch (fwdErr) {
+        clearTimeout(timeout);
+        console.error('Forward failed', { err: fwdErr.message, dest: dest.slice(0,50) });
+        // Still return 200 to Meta to avoid retry loop, but inform logs
+        return res.status(200).json({ ok: true, blind: true, forwarded: false, error: fwdErr.message });
+      }
+
+    } catch (err) {
+      console.error('webhook POST error', err.message);
+      return res.status(200).json({ ok: true, blind: true, error: 'internal_logged' });
     }
   }
 
-  if(req.method === 'OPTIONS'){ res.status(200).end(); return; }
-  res.status(405).json({ok:false});
+  return res.status(405).json({ error: 'Method not allowed' });
 };
