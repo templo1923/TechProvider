@@ -4,7 +4,7 @@
   "description": "White-label SaaS - Tus mensajes van a todas partes excepto a trav\u00e9s de nosotros. Message-blind, old flow without config_id.",
   "private": true,
   "engines": {
-    "node": "20.x"
+    "node": "24.x"
   },
   "scripts": {
     "dev": "vercel dev",
